@@ -1,6 +1,6 @@
 # workflow-kit
 
-Canonical repository: [https://github.com/Katestheimeno/workflow-kit](https://github.com/Katestheimeno/workflow-kit)
+Canonical repository: `git@github.com:Katestheimeno/workflow-kit.git`
 
 **Task Checkpoint Protocol** for AI-assisted development: files under `.claude/` (entrypoint, context map, task plans) plus an optional `CLAUDE.md.example` at the project root.
 
@@ -24,7 +24,7 @@ This kit does **not** ship language- or product-specific rules; add your own in-
 ## Install (recommended): clone, then run `install.sh`
 
 ```bash
-git clone https://github.com/Katestheimeno/workflow-kit.git
+git clone git@github.com:Katestheimeno/workflow-kit.git
 cd workflow-kit
 chmod +x install.sh bootstrap.sh
 ./install.sh /path/to/your-project
@@ -78,7 +78,7 @@ If `CLAUDE.md.example` already exists at the target, it is **not** overwritten (
 
 ## Publishing / initial push to GitHub (maintainers)
 
-The default remote for this project is [Katestheimeno/workflow-kit](https://github.com/Katestheimeno/workflow-kit). To populate an empty remote from a working tree:
+The default remote for this project is `git@github.com:Katestheimeno/workflow-kit.git` (GitHub: Katestheimeno/workflow-kit). To populate an empty remote from a working tree:
 
 1. Create the repository on GitHub (if empty, no commits yet).
 2. At the **root of the content** to publish, include: `README.md`, `VERSION`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `bootstrap.sh`, `bundle/`.
@@ -88,7 +88,7 @@ The default remote for this project is [Katestheimeno/workflow-kit](https://gith
 git init
 git add .
 git commit -m "chore: workflow-kit v1.1.0"
-git remote add origin https://github.com/Katestheimeno/workflow-kit.git
+git remote add origin git@github.com:Katestheimeno/workflow-kit.git
 git branch -M main
 git push -u origin main
 git tag v1.1.0
@@ -97,7 +97,7 @@ git push origin v1.1.0
 
 Tags enable `bootstrap.sh -t v1.1.0` and stable `raw.githubusercontent` URLs.
 
-## Mirroring in another monorepo (e.g. Depadrive-core)
+## Mirroring in another monorepo
 
 You may keep a `workflow-kit/` subfolder in a larger project as a **copy** of this repository; after each release, sync via copy PR, subtree, or manual merge. The published repo remains the **canonical** home.
 

@@ -107,4 +107,4 @@ Command returning exit 0 before [COMPLETED].
 
 ## Kit version (optional)
 
-If this repository was set up with [workflow-kit](https://github.com/Katestheimeno/workflow-kit), the file **`.claude/WORKFLOW_KIT`** records the installed kit version and install time. It is safe to commit so the team can see which protocol revision a repo uses. Re-run the kit’s `install.sh` or `install.sh --only-protocol` to refresh the entrypoint after upgrading the kit clone.
+If this repository was set up with workflow-kit (`git@github.com:Katestheimeno/workflow-kit.git`), the file **`.claude/WORKFLOW_KIT`** records the installed kit version and install time. It is safe to commit so the team can see which protocol revision a repo uses. Re-run the kit’s `install.sh` or `install.sh --only-protocol` to refresh the entrypoint after upgrading the kit clone.

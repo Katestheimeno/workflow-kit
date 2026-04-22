@@ -3,7 +3,7 @@
 # Use when you do not have the kit checked out (e.g. one-line install from a clean machine with git + network).
 set -euo pipefail
 
-REPO_DEFAULT="https://github.com/Katestheimeno/workflow-kit.git"
+REPO_DEFAULT="git@github.com:Katestheimeno/workflow-kit.git"
 REPO="${WORKFLOW_KIT_REPO:-${REPO_DEFAULT}}"
 
 TAG="v1.1.0"
@@ -21,7 +21,7 @@ Options:
   -h, --help      Show this help.
 
 Environment:
-  WORKFLOW_KIT_REPO   Override the git URL (default: Katestheimeno/workflow-kit).
+  WORKFLOW_KIT_REPO   Override the git URL (default: git@github.com:Katestheimeno/workflow-kit.git).
 
 Requires: git, bash, and network access to GitHub.
 EOF

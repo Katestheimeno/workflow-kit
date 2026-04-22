@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Installs the workflow-kit bundle into <target>/.claude/ and optionally CLAUDE.md.example at <target>/.
-# Canonical source: https://github.com/Katestheimeno/workflow-kit
+# Canonical source: git@github.com:Katestheimeno/workflow-kit.git
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUNDLE_DIR="${SCRIPT_DIR}/bundle"
 VERSION_FILE="${SCRIPT_DIR}/VERSION"
-CANONICAL_SOURCE="https://github.com/Katestheimeno/workflow-kit"
+CANONICAL_SOURCE="git@github.com:Katestheimeno/workflow-kit.git"
 
 DRY_RUN=0
 FORCE=0
