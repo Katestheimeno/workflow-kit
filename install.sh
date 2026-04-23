@@ -123,6 +123,35 @@ ENTRYPOINT="${CLAUDE_DIR}/CLAUDE_ENTRYPOINT.md"
 EXAMPLE_DST="${TARGET}/CLAUDE.md.example"
 KIT_VER="$(tr -d ' \t\n\r' < "${VERSION_FILE}" 2>/dev/null || echo unknown)"
 
+print_hooks_prompt() {
+  local claude_dir="$1"
+  local ex="${claude_dir}/settings.json.example"
+  local live="${claude_dir}/settings.json"
+  cat <<EOF
+
+workflow-kit: hooks are installed but NOT yet wired up.
+
+  Sample config: ${ex}
+  Your config:   ${live}
+
+  → To enable the hooks, merge the "hooks" block from settings.json.example
+    into your ${live}. If you don't have one yet, you can just copy it:
+
+      cp "${ex}" "${live}"
+
+  Hooks that will run once enabled:
+    - SessionStart  → hooks/session-start.sh       (prints active-feature state)
+    - PostToolUse   → hooks/progress-heartbeat.sh  (feature-completion + scope-drift warnings)
+    - Stop          → hooks/validate-state.sh      (checks state invariants)
+
+  Manual tool (invoke when a feature is done):
+    ${claude_dir}/hooks/archive-feature.sh <feature>
+
+  Strict mode (hooks exit 2 on violations, blocking tool calls):
+    export WORKFLOW_KIT_STRICT=1
+EOF
+}
+
 if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
   if [[ "${FORCE}" -eq 1 ]]; then
     echo "workflow-kit: --force is ignored with --only-protocol (tasks/ and CONTEXT_MAP are never replaced)." >&2
@@ -138,6 +167,12 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
     if [[ -d "${BUNDLE_DIR}/example-feature" ]]; then
       echo "[dry-run] rm -rf ${CLAUDE_DIR}/example-feature && cp -a ${BUNDLE_DIR}/example-feature ${CLAUDE_DIR}/"
     fi
+    if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
+      echo "[dry-run] rm -rf ${CLAUDE_DIR}/hooks && cp -a ${BUNDLE_DIR}/hooks ${CLAUDE_DIR}/"
+    fi
+    if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
+      echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
+    fi
   else
     mkdir -p "${CLAUDE_DIR}"
     cp "${BUNDLE_DIR}/CLAUDE_ENTRYPOINT.md" "${CLAUDE_DIR}/"
@@ -145,12 +180,21 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
       rm -rf "${CLAUDE_DIR}/example-feature"
       cp -a "${BUNDLE_DIR}/example-feature" "${CLAUDE_DIR}/"
     fi
+    if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
+      rm -rf "${CLAUDE_DIR}/hooks"
+      cp -a "${BUNDLE_DIR}/hooks" "${CLAUDE_DIR}/"
+      chmod +x "${CLAUDE_DIR}/hooks/"*.sh 2>/dev/null || true
+    fi
+    if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
+      cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
+    fi
   fi
   write_workflow_marker "${CLAUDE_DIR}" "${TARGET}" "${KIT_VER}"
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "[dry-run] done (protocol-only)."
   else
-    echo "workflow-kit: updated entrypoint and example-feature/ under ${CLAUDE_DIR}"
+    echo "workflow-kit: refreshed entrypoint, example-feature/, hooks/, and settings.json.example under ${CLAUDE_DIR}"
+    print_hooks_prompt "${CLAUDE_DIR}"
   fi
   exit 0
 fi
@@ -187,6 +231,12 @@ install_claude_tree() {
     if [[ -d "${BUNDLE_DIR}/example-feature" ]]; then
       echo "[dry-run] cp -a ${BUNDLE_DIR}/example-feature ${CLAUDE_DIR}/"
     fi
+    if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
+      echo "[dry-run] cp -a ${BUNDLE_DIR}/hooks ${CLAUDE_DIR}/"
+    fi
+    if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
+      echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
+    fi
     return
   fi
 
@@ -198,6 +248,14 @@ install_claude_tree() {
   if [[ -d "${BUNDLE_DIR}/example-feature" ]]; then
     rm -rf "${CLAUDE_DIR}/example-feature"
     cp -a "${BUNDLE_DIR}/example-feature" "${CLAUDE_DIR}/"
+  fi
+  if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
+    rm -rf "${CLAUDE_DIR}/hooks"
+    cp -a "${BUNDLE_DIR}/hooks" "${CLAUDE_DIR}/"
+    chmod +x "${CLAUDE_DIR}/hooks/"*.sh 2>/dev/null || true
+  fi
+  if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
+    cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
   fi
 }
 
@@ -226,4 +284,5 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
 else
   echo "workflow-kit: installed .claude/ task checkpoint under ${CLAUDE_DIR}"
   echo "workflow-kit: read ${ENTRYPOINT} first for every AI-assisted session."
+  print_hooks_prompt "${CLAUDE_DIR}"
 fi

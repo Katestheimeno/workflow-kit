@@ -17,9 +17,24 @@ Version: [VERSION](VERSION). Changelog: [CHANGELOG.md](CHANGELOG.md). License: [
 | `.claude/tasks/general/SESSION_LOG.md` | Append-only log for small tasks |
 | `.claude/tasks/completed/`, `archive/` | Placeholders for summaries |
 | `.claude/example-feature/` | README, example `MASTER_TASKS.md` and `001-example-subtask.md` |
+| `.claude/hooks/` | Shell scripts: `session-start.sh`, `progress-heartbeat.sh`, `validate-state.sh`, `archive-feature.sh`, shared `_lib.sh` |
+| `.claude/settings.json.example` | Sample Claude Code `hooks` wiring; **you merge it** into `.claude/settings.json` to activate |
 | `CLAUDE.md.example` (optional) | Stub pointing at the entrypoint; copy or merge into your `CLAUDE.md` |
 
 This kit does **not** ship language- or product-specific rules; add your own in-repo docs or tool-specific config (e.g. `.cursor/`, `AGENTS.md`).
+
+## Hooks (enforce the protocol)
+
+After install, merge `.claude/settings.json.example` into your `.claude/settings.json` to wire up:
+
+- **SessionStart** → `hooks/session-start.sh` — prints active feature + `[IN_PROGRESS]` subtask so Claude opens aligned.
+- **PostToolUse** (Edit|Write|MultiEdit) → `hooks/progress-heartbeat.sh` — warns on scope drift vs. the active subtask's `Allowed:` list; announces when a feature's subtasks are all `[COMPLETED]` and suggests archiving.
+- **Stop** → `hooks/validate-state.sh` — checks invariants (at most one `[IN_PROGRESS]`, `MASTER_PLAN.md` Active matches reality).
+
+Archive a finished feature with `.claude/hooks/archive-feature.sh <feature>`: writes `tasks/completed/<feature>.md`, moves the folder to `tasks/archive/<feature>/`, and rewrites the pointers in `MASTER_PLAN.md` and `CONTEXT_MAP.md`. `--dry-run` previews; `--force` archives incomplete features.
+
+Hooks are **soft by default** (warnings on stderr). Set `WORKFLOW_KIT_STRICT=1` to make them exit 2 and block the tool call on violations.
+
 
 ## Install (recommended): clone, then run `install.sh`
 
