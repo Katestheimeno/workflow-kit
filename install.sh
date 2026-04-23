@@ -123,6 +123,31 @@ ENTRYPOINT="${CLAUDE_DIR}/CLAUDE_ENTRYPOINT.md"
 EXAMPLE_DST="${TARGET}/CLAUDE.md.example"
 KIT_VER="$(tr -d ' \t\n\r' < "${VERSION_FILE}" 2>/dev/null || echo unknown)"
 
+# Copy each file from bundle/hooks/ into .claude/hooks/ one-by-one (merge, not replace).
+# Overwrites kit-owned scripts; leaves any unrelated files in .claude/hooks/ alone
+# so users with their own hook scripts (e.g. checkpoint.sh) don't lose them.
+merge_hooks_dir() {
+  local src="${BUNDLE_DIR}/hooks"
+  local dst="${CLAUDE_DIR}/hooks"
+  [[ -d "$src" ]] || return 0
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[dry-run] mkdir -p ${dst}"
+    local f
+    for f in "$src"/*; do
+      [[ -e "$f" ]] || continue
+      echo "[dry-run] cp ${f} ${dst}/"
+    done
+    return 0
+  fi
+  mkdir -p "$dst"
+  local f
+  for f in "$src"/*; do
+    [[ -e "$f" ]] || continue
+    cp "$f" "$dst/"
+  done
+  chmod +x "$dst/"*.sh 2>/dev/null || true
+}
+
 print_hooks_prompt() {
   local claude_dir="$1"
   local ex="${claude_dir}/settings.json.example"
@@ -167,9 +192,7 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
     if [[ -d "${BUNDLE_DIR}/example-feature" ]]; then
       echo "[dry-run] rm -rf ${CLAUDE_DIR}/example-feature && cp -a ${BUNDLE_DIR}/example-feature ${CLAUDE_DIR}/"
     fi
-    if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
-      echo "[dry-run] rm -rf ${CLAUDE_DIR}/hooks && cp -a ${BUNDLE_DIR}/hooks ${CLAUDE_DIR}/"
-    fi
+    merge_hooks_dir
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
     fi
@@ -180,11 +203,7 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
       rm -rf "${CLAUDE_DIR}/example-feature"
       cp -a "${BUNDLE_DIR}/example-feature" "${CLAUDE_DIR}/"
     fi
-    if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
-      rm -rf "${CLAUDE_DIR}/hooks"
-      cp -a "${BUNDLE_DIR}/hooks" "${CLAUDE_DIR}/"
-      chmod +x "${CLAUDE_DIR}/hooks/"*.sh 2>/dev/null || true
-    fi
+    merge_hooks_dir
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
     fi
@@ -193,7 +212,7 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "[dry-run] done (protocol-only)."
   else
-    echo "workflow-kit: refreshed entrypoint, example-feature/, hooks/, and settings.json.example under ${CLAUDE_DIR}"
+    echo "workflow-kit: refreshed entrypoint, example-feature/, kit-owned hook scripts, and settings.json.example under ${CLAUDE_DIR}"
     print_hooks_prompt "${CLAUDE_DIR}"
   fi
   exit 0
@@ -231,9 +250,7 @@ install_claude_tree() {
     if [[ -d "${BUNDLE_DIR}/example-feature" ]]; then
       echo "[dry-run] cp -a ${BUNDLE_DIR}/example-feature ${CLAUDE_DIR}/"
     fi
-    if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
-      echo "[dry-run] cp -a ${BUNDLE_DIR}/hooks ${CLAUDE_DIR}/"
-    fi
+    merge_hooks_dir
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
     fi
@@ -249,11 +266,7 @@ install_claude_tree() {
     rm -rf "${CLAUDE_DIR}/example-feature"
     cp -a "${BUNDLE_DIR}/example-feature" "${CLAUDE_DIR}/"
   fi
-  if [[ -d "${BUNDLE_DIR}/hooks" ]]; then
-    rm -rf "${CLAUDE_DIR}/hooks"
-    cp -a "${BUNDLE_DIR}/hooks" "${CLAUDE_DIR}/"
-    chmod +x "${CLAUDE_DIR}/hooks/"*.sh 2>/dev/null || true
-  fi
+  merge_hooks_dir
   if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
     cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
   fi
