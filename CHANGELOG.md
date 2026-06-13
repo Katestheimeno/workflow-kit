@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-13
+
+### Added
+
+- **Orchestration layer** (stack-agnostic) installed alongside the checkpoint protocol:
+  - `.claude/agents/` — 10 role agents: `orchestrator`, `planner`, `implementer`, `explorer`, `code-reviewer`, `test-writer`, `doc-writer`, `security-auditor`, `sweep-analyzer`, `sweep-reviewer`.
+  - `.claude/commands/` — `/tasks` (parallelized task-plan generator) and `/sweep` (deep domain analysis → verified remediation plan).
+  - `.claude/rules/` — `workflow.md` (agent orchestration protocol), `quality.md` (Definition of Done), `testing.md` (testing discipline).
+  - `.claude/prompts/` — `sweep.md` (engine behind `/sweep`), `generate-commit-script.md`, `work-journal.md`.
+- `hooks/checkpoint.sh` — `UserPromptSubmit` hook that injects the checkpoint protocol and the active feature into every prompt; wired in `settings.json.example`.
+- **Stack overlays** under `bundle/overlays/`. `install.sh --overlay django` applies a Django/DRF-flavored version of the agents, commands, rules, and prompts over the generic core (see `bundle/overlays/django/README.md`).
+- `install.ps1` — PowerShell port of `install.sh` (same flags and behavior) for Windows PowerShell 5.1+ / PowerShell 7+.
+
+### Changed
+
+- `install.sh` now installs the kit-owned content dirs (`agents/ commands/ rules/ prompts/`) on full install and `--only-protocol`, merging file-by-file so user-added files are preserved. New `--overlay NAME` flag.
+- `CLAUDE_ENTRYPOINT.md` documents the optional orchestration layer.
+- README documents the orchestration layer, the checkpoint hook, and overlays.
+
 ## [1.1.0] - 2026-04-22
 
 ### Added
@@ -28,5 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial kit: `CLAUDE_ENTRYPOINT.md`, `CONTEXT_MAP` template, `tasks/` skeleton, `install.sh`, `CLAUDE.md.example`, `example-feature` README.
 
+[1.2.0]: https://github.com/Katestheimeno/workflow-kit/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Katestheimeno/workflow-kit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Katestheimeno/workflow-kit/releases/tag/v1.0.0

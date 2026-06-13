@@ -105,6 +105,28 @@ Command returning exit 0 before [COMPLETED].
 
 ---
 
+## Orchestration layer (optional)
+
+If this repo was installed with the kit's content dirs, you also have a multi-agent
+orchestration layer built on top of the checkpoint protocol:
+
+- **`.claude/agents/`** — role agents: `orchestrator`, `planner`, `implementer`,
+  `explorer`, `code-reviewer`, `test-writer`, `doc-writer`, `security-auditor`,
+  `sweep-analyzer`, `sweep-reviewer`. The orchestrator dispatches the others in parallel
+  groups with disjoint file ownership, then cross-reviews.
+- **`.claude/commands/`** — `/tasks <description>` builds a parallelized `MASTER_TASKS`
+  plan; `/sweep <domain>` runs a deep analysis sweep and generates a verified remediation
+  plan.
+- **`.claude/rules/`** — conventions the agents read as source of truth. `workflow.md` is
+  the agent orchestration protocol; add your own `foundations.md`/layering rules so agents
+  match your stack. (A Django overlay ships these pre-filled — see the kit's
+  `bundle/overlays/`.)
+- **`.claude/prompts/`** — `sweep.md` (the engine behind `/sweep`),
+  `generate-commit-script.md`, `work-journal.md`.
+
+These are **stack-agnostic** by default: they describe *how* work flows through agents,
+deferring stack-specific conventions to `.claude/rules/` and `.claude/CONTEXT_MAP.md`.
+
 ## Kit version (optional)
 
 If this repository was set up with workflow-kit (`git@github.com:Katestheimeno/workflow-kit.git`), the file **`.claude/WORKFLOW_KIT`** records the installed kit version and install time. It is safe to commit so the team can see which protocol revision a repo uses. Re-run the kit’s `install.sh` or `install.sh --only-protocol` to refresh the entrypoint after upgrading the kit clone.

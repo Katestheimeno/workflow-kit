@@ -12,7 +12,11 @@ DRY_RUN=0
 FORCE=0
 NO_CLAUDE_EXAMPLE=0
 ONLY_PROTOCOL=0
+OVERLAY=""
 TARGET_ARG=""
+
+# Kit-owned content directories copied (merged) into .claude/ on install and refresh.
+CONTENT_DIRS=(agents commands rules prompts)
 
 usage() {
   cat <<EOF
@@ -24,9 +28,13 @@ Options:
   --dry-run            Print actions only; do not modify the filesystem.
   --force              If .claude/ already exists, move it to .claude.bak.<epoch> then full install.
   --no-claude-example  Do not copy CLAUDE.md.example to TARGET_DIR.
-  --only-protocol      Refresh only CLAUDE_ENTRYPOINT.md and example-feature/ from the bundle.
+  --only-protocol      Refresh only CLAUDE_ENTRYPOINT.md, example-feature/, and the kit-owned
+                       content dirs (agents/ commands/ rules/ prompts/) from the bundle.
                        Requires an existing install (.claude/CLAUDE_ENTRYPOINT.md). Does not modify
                        tasks/, CONTEXT_MAP.md, or CLAUDE.md.example. Writes/updates .claude/WORKFLOW_KIT.
+  --overlay NAME       After the generic core, apply a stack overlay from bundle/overlays/NAME/
+                       (e.g. --overlay django). Overlay files override the generic agents/commands/
+                       rules/prompts. See bundle/overlays/NAME/README.md.
   -h, --help           Show this help.
   --version            Print kit version and exit.
 
@@ -90,6 +98,18 @@ while [[ $# -gt 0 ]]; do
       ONLY_PROTOCOL=1
       shift
       ;;
+    --overlay)
+      if [[ $# -lt 2 ]]; then
+        echo "--overlay requires a name (e.g. --overlay django)" >&2
+        exit 1
+      fi
+      OVERLAY="$2"
+      shift 2
+      ;;
+    --overlay=*)
+      OVERLAY="${1#*=}"
+      shift
+      ;;
     -*)
       echo "Unknown option: $1" >&2
       usage >&2
@@ -108,6 +128,17 @@ done
 
 if [[ ! -d "${BUNDLE_DIR}" ]]; then
   echo "workflow-kit: bundle directory not found: ${BUNDLE_DIR}" >&2
+  exit 1
+fi
+
+if [[ -n "${OVERLAY}" && ! -d "${BUNDLE_DIR}/overlays/${OVERLAY}" ]]; then
+  echo "workflow-kit: overlay not found: ${BUNDLE_DIR}/overlays/${OVERLAY}" >&2
+  echo "  Available overlays:" >&2
+  if [[ -d "${BUNDLE_DIR}/overlays" ]]; then
+    for o in "${BUNDLE_DIR}/overlays"/*/; do [[ -d "$o" ]] && echo "    - $(basename "$o")" >&2; done
+  else
+    echo "    (none)" >&2
+  fi
   exit 1
 fi
 
@@ -148,6 +179,48 @@ merge_hooks_dir() {
   chmod +x "$dst/"*.sh 2>/dev/null || true
 }
 
+# Merge one bundle subdir into .claude/<name>/ file-by-file (overwrites kit-owned files,
+# leaves any unrelated user files in place). Used for agents/ commands/ rules/ prompts/.
+merge_one_dir() {
+  local src="$1"
+  local dst="$2"
+  [[ -d "$src" ]] || return 0
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "[dry-run] mkdir -p ${dst}"
+    local f
+    for f in "$src"/*; do
+      [[ -e "$f" ]] || continue
+      echo "[dry-run] cp ${f} ${dst}/"
+    done
+    return 0
+  fi
+  mkdir -p "$dst"
+  local f
+  for f in "$src"/*; do
+    [[ -e "$f" ]] || continue
+    cp "$f" "$dst/"
+  done
+}
+
+# Copy the kit-owned content dirs (agents/ commands/ rules/ prompts/) into .claude/.
+merge_content_dirs() {
+  local d
+  for d in "${CONTENT_DIRS[@]}"; do
+    merge_one_dir "${BUNDLE_DIR}/${d}" "${CLAUDE_DIR}/${d}"
+  done
+}
+
+# Apply a stack overlay over the generic content dirs (overlay files win).
+apply_overlay() {
+  [[ -n "${OVERLAY}" ]] || return 0
+  local base="${BUNDLE_DIR}/overlays/${OVERLAY}"
+  echo "workflow-kit: applying '${OVERLAY}' overlay over the generic core"
+  local d
+  for d in "${CONTENT_DIRS[@]}"; do
+    merge_one_dir "${base}/${d}" "${CLAUDE_DIR}/${d}"
+  done
+}
+
 print_hooks_prompt() {
   local claude_dir="$1"
   local ex="${claude_dir}/settings.json.example"
@@ -165,9 +238,10 @@ workflow-kit: hooks are installed but NOT yet wired up.
       cp "${ex}" "${live}"
 
   Hooks that will run once enabled:
-    - SessionStart  → hooks/session-start.sh       (prints active-feature state)
-    - PostToolUse   → hooks/progress-heartbeat.sh  (feature-completion + scope-drift warnings)
-    - Stop          → hooks/validate-state.sh      (checks state invariants)
+    - UserPromptSubmit → hooks/checkpoint.sh         (injects the checkpoint protocol + active feature)
+    - SessionStart     → hooks/session-start.sh      (prints active-feature state)
+    - PostToolUse      → hooks/progress-heartbeat.sh (feature-completion + scope-drift warnings)
+    - Stop             → hooks/validate-state.sh     (checks state invariants)
 
   Manual tool (invoke when a feature is done):
     ${claude_dir}/hooks/archive-feature.sh <feature>
@@ -208,11 +282,13 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
       cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
     fi
   fi
+  merge_content_dirs
+  apply_overlay
   write_workflow_marker "${CLAUDE_DIR}" "${TARGET}" "${KIT_VER}"
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "[dry-run] done (protocol-only)."
   else
-    echo "workflow-kit: refreshed entrypoint, example-feature/, kit-owned hook scripts, and settings.json.example under ${CLAUDE_DIR}"
+    echo "workflow-kit: refreshed entrypoint, example-feature/, content dirs (agents/ commands/ rules/ prompts/), hook scripts, and settings.json.example under ${CLAUDE_DIR}"
     print_hooks_prompt "${CLAUDE_DIR}"
   fi
   exit 0
@@ -251,6 +327,8 @@ install_claude_tree() {
       echo "[dry-run] cp -a ${BUNDLE_DIR}/example-feature ${CLAUDE_DIR}/"
     fi
     merge_hooks_dir
+    merge_content_dirs
+    apply_overlay
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
     fi
@@ -267,6 +345,8 @@ install_claude_tree() {
     cp -a "${BUNDLE_DIR}/example-feature" "${CLAUDE_DIR}/"
   fi
   merge_hooks_dir
+  merge_content_dirs
+  apply_overlay
   if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
     cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
   fi
@@ -296,6 +376,7 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[dry-run] done."
 else
   echo "workflow-kit: installed .claude/ task checkpoint under ${CLAUDE_DIR}"
+  echo "workflow-kit: orchestration layer installed: agents/ commands/ rules/ prompts/${OVERLAY:+ (+ ${OVERLAY} overlay)}"
   echo "workflow-kit: read ${ENTRYPOINT} first for every AI-assisted session."
   print_hooks_prompt "${CLAUDE_DIR}"
 fi
