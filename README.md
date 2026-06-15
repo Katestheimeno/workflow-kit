@@ -19,7 +19,7 @@ Version: [VERSION](VERSION). Changelog: [CHANGELOG.md](CHANGELOG.md). License: [
 | `.claude/example-feature/` | README, example `MASTER_TASKS.md` and `001-example-subtask.md` |
 | `.claude/hooks/` | Shell scripts: `checkpoint.sh`, `session-start.sh`, `progress-heartbeat.sh`, `validate-state.sh`, `archive-feature.sh`, shared `_lib.sh` |
 | `.claude/agents/` | 10 stack-agnostic role agents (orchestrator, planner, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
-| `.claude/commands/` | `/tasks` (parallelized task-plan generator) and `/sweep` (deep domain analysis → remediation plan) |
+| `.claude/commands/` | `/tasks` (router: `pln` plan + review, `impl` orchestrated execution, `cmplt` archive) and `/sweep` (deep domain/context analysis → remediation plan) |
 | `.claude/rules/` | `workflow.md` (agent orchestration protocol), `quality.md` (Definition of Done), `testing.md` (testing discipline) |
 | `.claude/prompts/` | `sweep.md` (engine behind `/sweep`), `generate-commit-script.md`, `work-journal.md` |
 | `.claude/settings.json.example` | Sample Claude Code `hooks` wiring; **you merge it** into `.claude/settings.json` to activate |
@@ -44,9 +44,9 @@ Hooks are **soft by default** (warnings on stderr). Set `WORKFLOW_KIT_STRICT=1` 
 
 On top of the checkpoint protocol, the kit ships a multi-agent orchestration layer. It is **stack-agnostic**: the agents read your project's conventions from `.claude/rules/*.md` and `.claude/CONTEXT_MAP.md` rather than hard-coding a language or framework.
 
-- **Agents** (`.claude/agents/`) — the `orchestrator` plans an implementation, writes precise instructions, and dispatches `implementer` / `test-writer` agents in parallel groups with **disjoint file ownership**, then runs `code-reviewer` agents as fresh eyes. `planner` designs `MASTER_TASKS` plans; `explorer` does fast codebase navigation; `doc-writer` keeps docs in sync; `security-auditor`, `sweep-analyzer`, and `sweep-reviewer` power deep analysis.
-- **`/tasks <description>`** — breaks a feature, remediation, or refactor into a dependency-aware, maximally parallel plan under `.claude/tasks/<feature>/` with strictly disjoint file ownership.
-- **`/sweep <domain>`** — runs five parallel analysis passes (bugs, performance, security, code quality, architecture) over a domain, verifies findings with an adversarial reviewer pass to kill false positives, and emits a prioritized remediation plan.
+- **Agents** (`.claude/agents/`) — the `orchestrator` plans an implementation, writes precise instructions, and dispatches `implementer` / `test-writer` agents in parallel groups with **disjoint file ownership**, then runs `code-reviewer` agents as fresh eyes. `planner` designs `MASTER_TASKS` plans and `plan-reviewer` critiques them before any code is written; `explorer` does fast codebase navigation; `doc-writer` keeps docs in sync; `security-auditor`, `sweep-analyzer`, and `sweep-reviewer` power deep analysis.
+- **`/tasks`** — a router with three subcommands: `pln [context]` breaks a feature, remediation, or refactor into a dependency-aware, maximally parallel plan under `.claude/tasks/<feature>/` (with strictly disjoint file ownership) and has `plan-reviewer` critique and amend it at least twice before presenting; `impl <plan> [rules]` dispatches the orchestrator to execute the plan, honoring rules like "stop after each phase"; `cmplt <plan>` archives a finished plan. Bare `/tasks <description>` still works as a shortcut for `pln`.
+- **`/sweep <domain | free-text context>`** — runs five parallel analysis passes (bugs, performance, security, code quality, architecture) over a domain **or** any free-text theme you describe, verifies findings with an adversarial reviewer pass to kill false positives, and emits a prioritized remediation plan.
 - **`rules/workflow.md`** is the protocol all of this follows: clarification gate → parallel work → confirmation → plan → parallel implementation → cross-review.
 
 To make the agents match your stack, fill in `.claude/rules/` with your layering/quality conventions (the kit ships generic `workflow.md`, `quality.md`, `testing.md`), or apply an overlay.

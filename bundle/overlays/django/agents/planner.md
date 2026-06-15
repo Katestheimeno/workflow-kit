@@ -96,6 +96,8 @@ Each subtask gets a risk tag:
 ```markdown
 # <Feature Name>
 
+Priority: <P0 | P1 | P2 | P3>
+Status: active
 **Date:** YYYY-MM-DD
 **Source:** <origin — user request, sweep findings, spec doc>
 **Goal:** <one sentence — what does "done" look like>
@@ -111,13 +113,25 @@ Each subtask gets a risk tag:
 
 ## Priority queue
 
-| ID | Subtask | Status | Phase | Group | Risk | Effort | Scope |
-|----|---------|--------|-------|-------|------|--------|-------|
-| 001 | <title> | [TODO] | 0 | — | LOW | 15m | <brief> |
-| 002 | <title> | [TODO] | 1 | A | MED | 30m | <brief> |
-| 003 | <title> | [TODO] | 1 | A | LOW | 20m | <brief> |
-| 004 | <title> | [TODO] | 1 | B | HIGH | 45m | <brief> |
-| 005 | <title> | [TODO] | 2 | — | LOW | 15m | <brief> |
+| ID | Subtask | Phase | Group | Risk | Effort | Scope |
+|----|---------|-------|-------|------|--------|-------|
+| 001 | <title> | 0 | — | LOW | 15m | <brief> |
+| 002 | <title> | 1 | A | MED | 30m | <brief> |
+| 003 | <title> | 1 | A | LOW | 20m | <brief> |
+| 004 | <title> | 1 | B | HIGH | 45m | <brief> |
+| 005 | <title> | 2 | — | LOW | 15m | <brief> |
+
+---
+
+## Subtasks
+
+<!-- Canonical status list. The orchestrator flips these to [COMPLETED]; archive-feature.sh reads them. -->
+<!-- Status token: PENDING | IN_PROGRESS | BLOCKED | COMPLETED | SKIPPED | DEFERRED -->
+- [PENDING] [001-<slug>.md](001-<slug>.md) — <title>
+- [PENDING] [002-<slug>.md](002-<slug>.md) — <title>
+- [PENDING] [003-<slug>.md](003-<slug>.md) — <title>
+- [PENDING] [004-<slug>.md](004-<slug>.md) — <title>
+- [PENDING] [005-<slug>.md](005-<slug>.md) — <title>
 
 ---
 
@@ -171,7 +185,7 @@ uv run pytest --ds=config.django.test
 ```markdown
 # NNN — <title>
 
-**Status:** [TODO]
+**Status:** [PENDING]
 **Phase:** <N>
 **Group:** <letter or "—">
 **Risk:** <LOW | MEDIUM | HIGH>

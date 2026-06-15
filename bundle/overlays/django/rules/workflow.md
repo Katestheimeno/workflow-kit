@@ -36,12 +36,16 @@ After parallel work completes (audit, research, analysis):
 On user confirmation, generate a plan following the established task structure:
 
 1. **Create** `.claude/tasks/<feature>/MASTER_TASKS.md` with:
-   - Goal and locked decisions
-   - Priority queue table: `ID | Subtask | Status | Phase | Parallel group`
+   - `Priority:`/`Status:` header lines, goal, and locked decisions
+   - Priority queue table: `ID | Subtask | Phase | Parallel group` (no status column)
+   - The machine-readable `## Subtasks` bullet list — `- [PENDING] [NNN-slug.md](NNN-slug.md) — title`
+     (status token: `PENDING | IN_PROGRESS | BLOCKED | COMPLETED | SKIPPED | DEFERRED`).
+     This is the canonical status source the orchestrator, the progress hooks, and
+     `/tasks cmplt` all read — it is mandatory.
    - Execution dependency graph showing which subtasks can run concurrently
    - Affected files inventory
    - Validation gate (Definition of Done for the feature)
-2. **Create subtask files** (`001-*.md`, `002-*.md`, ...) per the subtask template in `CLAUDE_ENTRYPOINT.md`.
+2. **Create subtask files** (`001-*.md`, `002-*.md`, ...) per the subtask template in `CLAUDE_ENTRYPOINT.md` (or via the `/tasks pln` command).
 3. **Update** `.claude/tasks/MASTER_PLAN.md` — set the new feature as Active.
 4. **Maximize parallel groups.** Every subtask that does not depend on another's output belongs in a concurrent group. Label groups (A, B, C, ...) and document the dependency edges.
 

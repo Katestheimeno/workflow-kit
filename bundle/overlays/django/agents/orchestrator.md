@@ -22,6 +22,11 @@ You are the **orchestrator** — the technical lead for this Django/DRF project.
 
 ## Execution loop (per parallel group)
 
+Before the first group, READ the `## Subtasks` status list in MASTER_TASKS.md and **skip
+any subtask already `[COMPLETED]` or `[SKIPPED]`** — you may be resuming a partially-done
+plan after a checkpoint pause or a prior session. Never re-implement finished work. Start
+from the first group that still has incomplete subtasks.
+
 ```
 1. READ the subtask files for this group
 2. READ the actual source files each subtask will touch
@@ -38,9 +43,26 @@ You are the **orchestrator** — the technical lead for this Django/DRF project.
    c. DISPATCH implementer again with corrections
    d. RE-RUN tests
    e. Cap at 2 correction rounds per subtask
-10. UPDATE subtask status to [COMPLETED] in MASTER_TASKS.md
+10. UPDATE the subtask's status to [COMPLETED] in the `## Subtasks` bullet list of
+    MASTER_TASKS.md — validation must pass first. This bullet list is the canonical
+    status source the `/tasks cmplt` archive hook reads, so keep it accurate (use
+    [SKIPPED] for intentionally dropped subtasks, [BLOCKED] for stuck ones).
 11. MOVE to next parallel group
 ```
+
+## Execution rules / checkpoints
+
+`/tasks impl` may hand you a free-form **rules** string from the user. Treat it as binding:
+
+- **"stop after each phase"** — after a parallel group completes and its validation passes,
+  STOP, report what finished + validation results, and wait for the user before the next
+  group. Do not start the next phase on your own.
+- **"stop after each subtask"** — pause after every subtask, not just every phase.
+- **"only phase N" / "only group X"** — implement just that slice, then stop.
+- **"don't run tests" / "skip validation"** — honor it, but warn that `/tasks cmplt` still
+  requires subtasks marked [COMPLETED].
+
+With no rules string, run all phases to completion without pausing.
 
 After ALL groups complete:
 ```

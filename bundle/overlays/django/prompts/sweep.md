@@ -1,22 +1,31 @@
-# Domain Sweep — Deep Analysis Prompt
+# Sweep — Deep Analysis Prompt
 
-> **Usage:** `@.claude/prompts/sweep.md <domain>`
-> **Skill shortcut:** `/sweep <domain>`
-> **Example:** `/sweep auth` or `@.claude/prompts/sweep.md game`
+> **Usage:** `@.claude/prompts/sweep.md <domain | free-text context>`
+> **Skill shortcut:** `/sweep <domain | free-text context>`
+> **Example:** `/sweep auth`, or `/sweep race conditions in the game consumers`
 >
-> The `<domain>` argument drives the entire sweep. Treat it as the top-level bounded context
-> you are about to inspect (e.g. `auth`, `payments`, `notifications`, `reporting`, `game`, `elearning`).
-> All output lives under `.claude/sweep/<domain>/`.
+> A sweep runs in one of two modes, resolved by the `/sweep` command before this prompt runs:
+> - **Domain mode** — `$LABEL` is a bounded context that maps to Django apps (e.g. `auth`,
+>   `game`, `elearning`), and `$CONTEXT` is empty. `$LABEL` ≡ `$DOMAIN`.
+> - **Context mode** — `$CONTEXT` is a free-text theme that drives the whole sweep (a
+>   concern, pattern, or cross-cutting question), and `$LABEL` is just a short slug naming
+>   the output folder.
+>
+> All output lives under `.claude/sweep/$LABEL/`.
 
 ---
 
 ## 0 — Bootstrap
 
-1. Read the argument passed after the prompt reference and store it as `$DOMAIN`.
+1. Determine the inputs from the `/sweep` command:
+   - `$LABEL` — the output-folder slug (in domain mode this is the domain name).
+   - `$CONTEXT` — the free-text theme in context mode; empty in domain mode.
+   - In domain mode, set `$DOMAIN = $LABEL`. In context mode, there is no single domain —
+     the **scope** is "every file relevant to `$CONTEXT`".
 2. Create the output tree **before** writing anything:
 
 ```
-.claude/sweep/$DOMAIN/
+.claude/sweep/$LABEL/
   bugs/
   performance/
   security/
@@ -27,7 +36,7 @@
 
 3. Remind yourself: you are a **first-pass analyst**, not a fixer. Your job is to
    observe, document, and hand off — not to change production code.
-4. Record the sweep start time in `raw_notes/00_project_orientation.md`.
+4. Record the sweep start time, the mode (domain vs context), and `$LABEL`/`$CONTEXT` in `raw_notes/00_project_orientation.md`.
 
 ---
 
@@ -44,13 +53,15 @@ Before touching `$DOMAIN`-specific code, orient yourself:
 - Note the Django version, DRF version, auth backends, and permission framework
   from `config/settings/` files.
 - Identify the DB routing strategy (`config/db_router.py`, `config/db_utils.py`).
-- Write a 10–20 line orientation summary to `.claude/sweep/$DOMAIN/raw_notes/00_project_orientation.md`.
+- Write a 10–20 line orientation summary to `.claude/sweep/$LABEL/raw_notes/00_project_orientation.md`.
 
 ---
 
-## 2 — Map the Domain
+## 2 — Map the Scope
 
-Locate every file that belongs to or is consumed by `$DOMAIN`:
+Locate every file in scope.
+
+**Domain mode** — every file that belongs to or is consumed by `$DOMAIN`:
 
 - Django apps whose name or purpose is directly related to `$DOMAIN`.
 - Any cross-cutting files that reference `$DOMAIN` models, signals, tasks, or constants
@@ -63,7 +74,18 @@ Locate every file that belongs to or is consumed by `$DOMAIN`:
   or missing `db_index` / `unique_together` on high-traffic fields.
 - Admin registrations and custom admin actions.
 
-Write the full file list to `.claude/sweep/$DOMAIN/raw_notes/01_domain_map.md`, organized by layer:
+**Context mode** — every file relevant to `$CONTEXT`:
+
+- Extract the key models, patterns, and symbols named or implied by `$CONTEXT`, then
+  grep/trace for them across the apps (call sites, definitions, related abstractions).
+- Cast a wide net first, then prune to files that genuinely bear on the theme. When in
+  doubt, include the file and note why it's in scope.
+- Include the same cross-cutting Django surfaces as domain mode (URLs, Celery tasks,
+  consumers, tests, migrations, admin) wherever they intersect the theme.
+- If the theme is genuinely project-wide, partition the scope into coherent areas so the
+  analysis passes stay focused rather than skimming everything shallowly.
+
+Write the full file list to `.claude/sweep/$LABEL/raw_notes/01_domain_map.md`, organized by layer:
 ```
 ## Models
 ## Services
@@ -86,7 +108,7 @@ Write the full file list to `.claude/sweep/$DOMAIN/raw_notes/01_domain_map.md`, 
 ## 3 — Bug Pass
 
 Read every file in the domain map **line by line**. For each potential bug, create a
-**separate file** inside `.claude/sweep/$DOMAIN/bugs/` named:
+**separate file** inside `.claude/sweep/$LABEL/bugs/` named:
 
 ```
 BUG-<NNN>_<short-slug>.md
@@ -154,7 +176,7 @@ Categories to hunt in the bug pass (not exhaustive — use judgment):
 
 ## 4 — Performance Pass
 
-For each performance issue found, create a file in `.claude/sweep/$DOMAIN/performance/`
+For each performance issue found, create a file in `.claude/sweep/$LABEL/performance/`
 named `PERF-<NNN>_<short-slug>.md` with this structure:
 
 ```markdown
@@ -202,7 +224,7 @@ Areas to inspect:
 
 ## 5 — Security Pass
 
-For each security issue found, create a file in `.claude/sweep/$DOMAIN/security/`
+For each security issue found, create a file in `.claude/sweep/$LABEL/security/`
 named `SEC-<NNN>_<short-slug>.md` with this structure:
 
 ```markdown
@@ -260,7 +282,7 @@ Security checklist for Django/DRF projects:
 
 ## 6 — Code Quality Pass
 
-Create files in `.claude/sweep/$DOMAIN/code_quality/` named
+Create files in `.claude/sweep/$LABEL/code_quality/` named
 `CQ-<NNN>_<short-slug>.md` using this template:
 
 ```markdown
@@ -306,7 +328,7 @@ Quality areas to inspect:
 
 ## 7 — Architecture Pass
 
-Create files in `.claude/sweep/$DOMAIN/architecture/`
+Create files in `.claude/sweep/$LABEL/architecture/`
 named `ARCH-<NNN>_<short-slug>.md`:
 
 ```markdown
@@ -358,8 +380,8 @@ instruction block (fill in `$DOMAIN`):
 You are a senior Django engineer performing a quality gate on automated findings.
 Your job is to **verify**, **dismiss false positives**, and **promote real issues**.
 
-1. Read `.claude/sweep/$DOMAIN/raw_notes/00_project_orientation.md` and
-   `.claude/sweep/$DOMAIN/raw_notes/01_domain_map.md` to orient yourself.
+1. Read `.claude/sweep/$LABEL/raw_notes/00_project_orientation.md` and
+   `.claude/sweep/$LABEL/raw_notes/01_domain_map.md` to orient yourself.
 
 2. For every finding file across `bugs/`, `performance/`, `security/`,
    `code_quality/`, and `architecture/`:
@@ -377,7 +399,7 @@ Your job is to **verify**, **dismiss false positives**, and **promote real issue
      **Confidence Override (if changed):** <new confidence or "unchanged">
      ```
 
-3. Write a summary to `.claude/sweep/$DOMAIN/raw_notes/02_reviewer_summary.md`:
+3. Write a summary to `.claude/sweep/$LABEL/raw_notes/02_reviewer_summary.md`:
    - Total findings by category.
    - Confirmed vs. dismissed vs. needs-more-info counts.
    - Top 5 most critical confirmed findings (ranked by severity × confidence).
@@ -398,9 +420,13 @@ After the reviewer subagent completes `02_reviewer_summary.md`, read:
 
 Then generate execution plans for all confirmed findings:
 
-1. **Create** `.claude/tasks/<domain>-sweep-remediation/MASTER_TASKS.md` with:
-   - Goal and locked decisions
-   - Priority queue table: `ID | Subtask | Status | Phase | Parallel group | Findings`
+1. **Create** `.claude/tasks/$LABEL-sweep-remediation/MASTER_TASKS.md` in the canonical
+   format produced by `/tasks pln`:
+   - `Priority:`/`Status:` header lines, goal, and locked decisions
+   - Priority queue table: `ID | Subtask | Phase | Parallel group | Findings` (no status column)
+   - The machine-readable `## Subtasks` bullet list — `- [PENDING] [NNN-slug.md](NNN-slug.md) — title`
+     (status token: `PENDING | IN_PROGRESS | BLOCKED | COMPLETED | SKIPPED | DEFERRED`).
+     This is what the orchestrator and `/tasks cmplt` consume, so it is mandatory.
    - Execution dependency graph showing which subtasks can run concurrently
    - File ownership table (strictly disjoint — no two subtasks touch the same file)
    - Validation gate (Definition of Done for the remediation)
@@ -419,7 +445,7 @@ Then generate execution plans for all confirmed findings:
    ```markdown
    # NNN — <title>
 
-   **Status:** [TODO]
+   **Status:** [PENDING]
    **Phase:** <N>
    **Group:** <letter>
    **Findings:** <list of finding IDs this subtask addresses>
@@ -443,7 +469,11 @@ Then generate execution plans for all confirmed findings:
    ```
    ```
 
-5. **Update** `.claude/tasks/MASTER_PLAN.md` — add the new remediation feature as Active.
+5. **Review the plan.** Dispatch the `plan-reviewer` agent at
+   `.claude/tasks/$LABEL-sweep-remediation/` and apply its amendments — this is what
+   enforces the strictly-disjoint file-ownership gate this sweep promises. One round is the
+   minimum; run a second if the first surfaces blocking items.
+6. **Update** `.claude/tasks/MASTER_PLAN.md` — add the new remediation feature as Active.
 
 ---
 

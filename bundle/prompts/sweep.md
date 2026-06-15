@@ -1,12 +1,17 @@
-# Domain Sweep — Deep Analysis Prompt
+# Sweep — Deep Analysis Prompt
 
-> **Usage:** `@.claude/prompts/sweep.md <domain>`
-> **Command shortcut:** `/sweep <domain>`
-> **Example:** `/sweep auth` or `@.claude/prompts/sweep.md billing`
+> **Usage:** `@.claude/prompts/sweep.md <domain | free-text context>`
+> **Command shortcut:** `/sweep <domain | free-text context>`
+> **Example:** `/sweep auth`, or `/sweep race conditions in the payment writers`
 >
-> The `<domain>` argument drives the entire sweep — the top-level bounded context you
-> are about to inspect (e.g. `auth`, `payments`, `notifications`, `reporting`, `search`).
-> All output lives under `.claude/sweep/<domain>/`.
+> A sweep runs in one of two modes, resolved by the `/sweep` command before this prompt runs:
+> - **Domain mode** — `$LABEL` is a bounded context that maps to modules/packages (e.g.
+>   `auth`, `payments`, `search`), and `$CONTEXT` is empty. `$LABEL` ≡ `$DOMAIN`.
+> - **Context mode** — `$CONTEXT` is a free-text theme that drives the whole sweep (a
+>   concern, pattern, or cross-cutting question), and `$LABEL` is just a short slug naming
+>   the output folder.
+>
+> All output lives under `.claude/sweep/$LABEL/`.
 >
 > Stack-agnostic. The checklists below are framework-neutral; adapt the search idioms
 > to the project's language(s). Read `.claude/CONTEXT_MAP.md` and `.claude/rules/*.md`
@@ -16,11 +21,15 @@
 
 ## 0 — Bootstrap
 
-1. Read the argument passed after the prompt reference and store it as `$DOMAIN`.
+1. Determine the inputs from the `/sweep` command:
+   - `$LABEL` — the output-folder slug (in domain mode this is the domain name).
+   - `$CONTEXT` — the free-text theme in context mode; empty in domain mode.
+   - In domain mode, set `$DOMAIN = $LABEL`. In context mode, there is no single domain —
+     the **scope** is "every file relevant to `$CONTEXT`".
 2. Create the output tree **before** writing anything:
 
 ```
-.claude/sweep/$DOMAIN/
+.claude/sweep/$LABEL/
   bugs/
   performance/
   security/
@@ -30,7 +39,7 @@
 ```
 
 3. Remind yourself: you are a **first-pass analyst**, not a fixer. Observe, document, and hand off — do not change production code.
-4. Record the sweep start time in `raw_notes/00_project_orientation.md`.
+4. Record the sweep start time, the mode (domain vs context), and `$LABEL`/`$CONTEXT` in `raw_notes/00_project_orientation.md`.
 
 ---
 
@@ -46,9 +55,11 @@ Before touching `$DOMAIN`-specific code, orient yourself:
 
 ---
 
-## 2 — Map the Domain
+## 2 — Map the Scope
 
-Locate every file that belongs to or is consumed by `$DOMAIN`:
+Locate every file in scope.
+
+**Domain mode** — every file that belongs to or is consumed by `$DOMAIN`:
 
 - Modules/packages whose name or purpose relates to `$DOMAIN`.
 - Cross-cutting files that reference `$DOMAIN`'s types, events, jobs, or constants (search imports and string literals).
@@ -57,6 +68,17 @@ Locate every file that belongs to or is consumed by `$DOMAIN`:
 - Realtime/streaming handlers and channels.
 - Tests: unit, integration, e2e — note coverage gaps immediately.
 - Schema migrations: flag risky data migrations or missing indexes/constraints on hot fields.
+
+**Context mode** — every file relevant to `$CONTEXT`:
+
+- Extract the key entities, patterns, and symbols named or implied by `$CONTEXT`, then
+  grep/trace for them across the codebase (call sites, definitions, related abstractions).
+- Cast a wide net first, then prune to files that genuinely bear on the theme. When in
+  doubt, include the file and note why it's in scope.
+- Include the same cross-cutting surfaces as domain mode (routing, jobs, realtime, tests,
+  migrations) wherever they intersect the theme.
+- If the theme is genuinely project-wide, partition the scope into coherent areas so the
+  analysis passes stay focused rather than skimming everything shallowly.
 
 Write the full file list to `raw_notes/01_domain_map.md`, organized by layer (adapt the
 headings to the project's architecture), e.g.:
@@ -234,11 +256,20 @@ Your job is to **verify**, **dismiss false positives**, and **promote real issue
 After `02_reviewer_summary.md` is written, read all **CONFIRMED** findings plus the
 summary, then generate a remediation plan (this mirrors the `/tasks` command):
 
-1. **Create** `.claude/tasks/<domain>-sweep-remediation/MASTER_TASKS.md` with goal, locked decisions, a priority-queue table, a dependency graph, a strictly-disjoint file-ownership table, and a validation gate.
+1. **Create** `.claude/tasks/$LABEL-sweep-remediation/MASTER_TASKS.md` in the canonical
+   format produced by `/tasks pln` — `Priority:`/`Status:` header lines, goal, locked
+   decisions, a priority-queue table, the machine-readable `## Subtasks` bullet list
+   (`- [PENDING] [NNN-slug.md](NNN-slug.md) — title`), a dependency graph, a
+   strictly-disjoint file-ownership table, and a validation gate. The `## Subtasks` list is
+   what the orchestrator and `/tasks cmplt` consume, so it is mandatory.
 2. **Group findings** into work packages (same file → same subtask; same concern → same group where files don't conflict; 1–5 findings per subtask).
 3. **Order by risk-adjusted priority:** CRITICAL security > CRITICAL bugs > HIGH bugs > HIGH security > MEDIUM everything else > LOW/CQ/ARCH.
 4. **Create numbered subtask files** (`001-*.md`, ...) with problem, files owned, fixes, tests, and validation.
-5. **Update** `.claude/tasks/MASTER_PLAN.md` — add the remediation feature as Active.
+5. **Review the plan.** Dispatch the `plan-reviewer` agent at
+   `.claude/tasks/$LABEL-sweep-remediation/` and apply its amendments — this is what
+   enforces the strictly-disjoint file-ownership gate this sweep promises. One round is the
+   minimum; run a second if the first surfaces blocking items.
+6. **Update** `.claude/tasks/MASTER_PLAN.md` — add the remediation feature as Active.
 
 ---
 

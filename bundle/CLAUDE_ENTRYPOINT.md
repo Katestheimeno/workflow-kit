@@ -110,13 +110,16 @@ Command returning exit 0 before [COMPLETED].
 If this repo was installed with the kit's content dirs, you also have a multi-agent
 orchestration layer built on top of the checkpoint protocol:
 
-- **`.claude/agents/`** — role agents: `orchestrator`, `planner`, `implementer`,
-  `explorer`, `code-reviewer`, `test-writer`, `doc-writer`, `security-auditor`,
-  `sweep-analyzer`, `sweep-reviewer`. The orchestrator dispatches the others in parallel
-  groups with disjoint file ownership, then cross-reviews.
-- **`.claude/commands/`** — `/tasks <description>` builds a parallelized `MASTER_TASKS`
-  plan; `/sweep <domain>` runs a deep analysis sweep and generates a verified remediation
-  plan.
+- **`.claude/agents/`** — role agents: `orchestrator`, `planner`, `plan-reviewer`,
+  `implementer`, `explorer`, `code-reviewer`, `test-writer`, `doc-writer`,
+  `security-auditor`, `sweep-analyzer`, `sweep-reviewer`. The orchestrator dispatches the
+  others in parallel groups with disjoint file ownership, then cross-reviews.
+- **`.claude/commands/`** — `/tasks` is a router with three subcommands: `pln [context]`
+  builds a parallelized `MASTER_TASKS` plan and has `plan-reviewer` critique/amend it ≥2×
+  before presenting; `impl <plan> [rules]` dispatches the orchestrator to execute it (rules
+  like "stop after each phase" become checkpoints); `cmplt <plan>` archives a finished plan
+  via the `archive-feature.sh` hook. `/sweep <domain | free-text context>` runs a deep
+  analysis sweep and generates a verified remediation plan.
 - **`.claude/rules/`** — conventions the agents read as source of truth. `workflow.md` is
   the agent orchestration protocol; add your own `foundations.md`/layering rules so agents
   match your stack. (A Django overlay ships these pre-filled — see the kit's
