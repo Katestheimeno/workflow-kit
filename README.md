@@ -103,6 +103,20 @@ chmod +x bootstrap.sh
 
 Override the remote with `WORKFLOW_KIT_REPO` (forks or mirrors).
 
+### Windows (PowerShell) — no local clone first
+
+`bootstrap.ps1` is a port of `bootstrap.sh` with the same behavior: it shallow-clones this repo at a tag and runs `install.ps1` in one step (works on Windows PowerShell 5.1+ and PowerShell 7+).
+
+```powershell
+.\bootstrap.ps1 C:\path\to\your-project
+# Pin a tag (default: v1.2.0):
+.\bootstrap.ps1 -t v1.2.0 C:\path\to\your-project
+# Forward install.ps1 flags (e.g. the Django overlay):
+.\bootstrap.ps1 --overlay django C:\path\to\your-project
+```
+
+Any options other than `-t`/`--tag` are forwarded to `install.ps1` unchanged. Override the remote with `$env:WORKFLOW_KIT_REPO`. If scripts are blocked by execution policy, run it for the current process only: `powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1 C:\path\to\your-project`. The installed hook scripts (`*.sh`) need a bash runtime such as Git Bash to execute.
+
 **Do not** run `install.sh` via `curl` from `raw.githubusercontent.com` **alone** — the script must sit next to a `bundle/` directory. Use **clone** or **bootstrap** instead.
 
 **Optional one-liner** (fetches the whole bootstrap script, then it clones the repo):
@@ -111,6 +125,13 @@ Override the remote with `WORKFLOW_KIT_REPO` (forks or mirrors).
 curl -fsSL https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.2.0/bootstrap.sh -o /tmp/wk-bootstrap.sh
 chmod +x /tmp/wk-bootstrap.sh
 /tmp/wk-bootstrap.sh /path/to/your-project
+```
+
+PowerShell one-liner equivalent (downloads `bootstrap.ps1`, then it clones the repo):
+
+```powershell
+irm https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.2.0/bootstrap.ps1 -OutFile $env:TEMP\wk-bootstrap.ps1
+powershell -ExecutionPolicy Bypass -File $env:TEMP\wk-bootstrap.ps1 C:\path\to\your-project
 ```
 
 Review any script before executing it. Prefer `git clone` for auditable installs.
@@ -140,7 +161,7 @@ If `CLAUDE.md.example` already exists at the target, it is **not** overwritten (
 The default remote for this project is `git@github.com:Katestheimeno/workflow-kit.git` (GitHub: Katestheimeno/workflow-kit). To populate an empty remote from a working tree:
 
 1. Create the repository on GitHub (if empty, no commits yet).
-2. At the **root of the content** to publish, include: `README.md`, `VERSION`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `install.ps1`, `bootstrap.sh`, `bundle/`.
+2. At the **root of the content** to publish, include: `README.md`, `VERSION`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `install.ps1`, `bootstrap.sh`, `bootstrap.ps1`, `bundle/`.
 3. From that directory:
 
 ```bash
