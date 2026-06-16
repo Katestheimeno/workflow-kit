@@ -82,7 +82,7 @@ For every non-trivial task: understand context → discover reuse → validate l
 | "Send welcome email after signup" | service | `accounts/services/` (or equivalent) calling notification utilities |
 | "Validate debate topic slug uniqueness" | serializer `validate_*` / model constraint | `game/` serializers or models |
 | "User can only see own game history" | permission + selector filter | scope queryset to `request.user` |
-| "Expire abandoned PvP waiting games" | Celery task + beat | `game/tasks.py` + Celery beat entry (see game flow docs) |
+| "Expire abandoned PvP waiting games" | Celery task + beat | `game/flow.py` + Celery beat entry (see game flow docs) |
 | "Broadcast game phase change over websocket" | Channels consumer / signal → async send | `game/` websocket handlers |
 | "Refresh derived stats after vote" | service call | `game/services/` (or dedicated analytics service) |
 | "Cross-app side effect (cache invalidation)" | signal handler | `*/handlers/`, delegate heavy work to a task |

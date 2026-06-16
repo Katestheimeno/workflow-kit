@@ -1,22 +1,22 @@
-# Tasks
+# Flow
 
-Plan, implement, and complete trackable bodies of work. `/tasks` is a small command
+Plan, implement, and complete trackable bodies of work. `/flow` is a small command
 router: the first word of `$ARGUMENTS` selects a subcommand; everything after it is
 that subcommand's input.
 
 ## Usage
 
 ```
-/tasks pln   [context]            Generate a reviewed implementation plan
-/tasks impl  <plan> [rules...]    Implement an existing plan via the orchestrator
-/tasks cmplt <plan> [--force]     Mark a plan complete and archive it
+/flow pln   [context]            Generate a reviewed implementation plan
+/flow impl  <plan> [rules...]    Implement an existing plan via the orchestrator
+/flow cmplt <plan> [--force]     Mark a plan complete and archive it
 ```
 
 **Examples:**
-- `/tasks pln Add presence tracking to chat sessions`
-- `/tasks pln` (plan from the current session context alone)
-- `/tasks impl presence-tracking stop after each phase`
-- `/tasks cmplt presence-tracking`
+- `/flow pln Add presence tracking to chat sessions`
+- `/flow pln` (plan from the current session context alone)
+- `/flow impl presence-tracking stop after each phase`
+- `/flow cmplt presence-tracking`
 
 ### Input
 
@@ -33,14 +33,36 @@ $ARGUMENTS
    - `impl` → **Subcommand: impl**
    - `cmplt` → **Subcommand: cmplt**
    - If `$SUB` is none of these **and** `$ARGUMENTS` is non-empty → treat the **entire**
-     `$ARGUMENTS` as `pln` context (back-compat with the old `/tasks <description>` form).
+     `$ARGUMENTS` as `pln` context (back-compat with the old `/flow <description>` form).
    - If `$ARGUMENTS` is empty → print the Usage block above and stop.
 
    Only these three exact abbreviations trigger a subcommand — deliberately **not**
    English words like `implement` or `complete`, so a natural description such as
-   `/tasks implement the search feature` plans (the safe default) instead of being misread
+   `/flow implement the search feature` plans (the safe default) instead of being misread
    as the `impl` subcommand with "the" as a plan name. To implement or complete, use the
-   abbreviation: `/tasks impl <plan>`, `/tasks cmplt <plan>`.
+   abbreviation: `/flow impl <plan>`, `/flow cmplt <plan>`.
+
+### Preflight — ensure task architecture
+
+Every subcommand (`pln`, `impl`, `cmplt`) reads or writes the `.claude/tasks/` tree —
+`MASTER_PLAN.md`, the `completed/` and `archive/` buckets, and `general/SESSION_LOG.md`.
+A freshly-cloned project (or one where that scaffolding was deleted) won't have them, and
+the subcommand would fail. So **before dispatching any subcommand** (but not for the
+empty-`$ARGUMENTS` usage path above), run the idempotent bootstrap:
+
+```bash
+.claude/hooks/ensure-tasks.sh
+```
+
+- It creates only what's missing and never overwrites existing files, so it's safe to run
+  on every invocation. If everything is already present it's a no-op.
+- If it created anything, mention that to the user in one line (e.g. "bootstrapped the
+  task scaffolding under `.claude/tasks/`") before continuing — the heal should not be silent.
+- It heals **data scaffolding only.** It cannot recreate the `planner`/`orchestrator`/
+  `plan-reviewer` agents or the `archive-feature.sh` hook — those are kit-owned files. If
+  the script exits non-zero (it can't find `.claude/CLAUDE_ENTRYPOINT.md`), the kit isn't
+  installed: stop and tell the user to run `install.sh`, rather than proceeding into a
+  guaranteed failure.
 
 ---
 
@@ -125,13 +147,13 @@ even if the plan looks complete.
    - Total subtasks created, number of parallel groups, estimated phases.
    - Top-priority subtask(s).
    - What each review round changed.
-   - The exact next command: `/tasks impl <feature-name>`.
+   - The exact next command: `/flow impl <feature-name>`.
    - Any open questions or decisions that need user input.
 
 ### What pln does NOT do
 
 - It does NOT implement any code changes, create branches/PRs, or modify production code.
-- It produces planning artifacts only. Implementation is `/tasks impl`.
+- It produces planning artifacts only. Implementation is `/flow impl`.
 
 ### Principles
 
@@ -184,7 +206,7 @@ If `$RULES` is empty, the orchestrator runs all phases to completion without pau
 2. When the orchestrator returns (or pauses at a checkpoint), relay its summary: which
    subtasks completed, validation results, anything escalated.
 3. When all subtasks are `[COMPLETED]`/`[SKIPPED]`, tell the user the next command:
-   `/tasks cmplt <feature-name>`.
+   `/flow cmplt <feature-name>`.
 
 **Resume is the default.** `impl` is idempotent: re-running it on a partially-done plan
 (after a checkpoint pause, an escalation, or a new session) resumes from the first subtask
@@ -218,7 +240,7 @@ Mark a plan complete and retire it. This wraps the kit hook
 3. The hook refuses unless **every** subtask in the `## Subtasks` list is `[COMPLETED]` or
    `[SKIPPED]`. If it reports unfinished subtasks:
    - List the unfinished subtask IDs it printed.
-   - Offer to either finish them (`/tasks impl <feature-name>`) or archive anyway with
+   - Offer to either finish them (`/flow impl <feature-name>`) or archive anyway with
      `--force`. Do **not** pass `--force` yourself unless the user explicitly asks.
 4. On success, relay the summary and archive paths the hook prints.
 

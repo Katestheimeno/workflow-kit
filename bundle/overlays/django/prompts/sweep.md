@@ -421,12 +421,12 @@ After the reviewer subagent completes `02_reviewer_summary.md`, read:
 Then generate execution plans for all confirmed findings:
 
 1. **Create** `.claude/tasks/$LABEL-sweep-remediation/MASTER_TASKS.md` in the canonical
-   format produced by `/tasks pln`:
+   format produced by `/flow pln`:
    - `Priority:`/`Status:` header lines, goal, and locked decisions
    - Priority queue table: `ID | Subtask | Phase | Parallel group | Findings` (no status column)
    - The machine-readable `## Subtasks` bullet list — `- [PENDING] [NNN-slug.md](NNN-slug.md) — title`
      (status token: `PENDING | IN_PROGRESS | BLOCKED | COMPLETED | SKIPPED | DEFERRED`).
-     This is what the orchestrator and `/tasks cmplt` consume, so it is mandatory.
+     This is what the orchestrator and `/flow cmplt` consume, so it is mandatory.
    - Execution dependency graph showing which subtasks can run concurrently
    - File ownership table (strictly disjoint — no two subtasks touch the same file)
    - Validation gate (Definition of Done for the remediation)

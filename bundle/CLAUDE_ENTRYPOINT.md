@@ -114,7 +114,7 @@ orchestration layer built on top of the checkpoint protocol:
   `implementer`, `explorer`, `code-reviewer`, `test-writer`, `doc-writer`,
   `security-auditor`, `sweep-analyzer`, `sweep-reviewer`. The orchestrator dispatches the
   others in parallel groups with disjoint file ownership, then cross-reviews.
-- **`.claude/commands/`** — `/tasks` is a router with three subcommands: `pln [context]`
+- **`.claude/commands/`** — `/flow` is a router with three subcommands: `pln [context]`
   builds a parallelized `MASTER_TASKS` plan and has `plan-reviewer` critique/amend it ≥2×
   before presenting; `impl <plan> [rules]` dispatches the orchestrator to execute it (rules
   like "stop after each phase" become checkpoints); `cmplt <plan>` archives a finished plan

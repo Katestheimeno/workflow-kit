@@ -254,14 +254,14 @@ Your job is to **verify**, **dismiss false positives**, and **promote real issue
 ## 9 — Task Generation
 
 After `02_reviewer_summary.md` is written, read all **CONFIRMED** findings plus the
-summary, then generate a remediation plan (this mirrors the `/tasks` command):
+summary, then generate a remediation plan (this mirrors the `/flow` command):
 
 1. **Create** `.claude/tasks/$LABEL-sweep-remediation/MASTER_TASKS.md` in the canonical
-   format produced by `/tasks pln` — `Priority:`/`Status:` header lines, goal, locked
+   format produced by `/flow pln` — `Priority:`/`Status:` header lines, goal, locked
    decisions, a priority-queue table, the machine-readable `## Subtasks` bullet list
    (`- [PENDING] [NNN-slug.md](NNN-slug.md) — title`), a dependency graph, a
    strictly-disjoint file-ownership table, and a validation gate. The `## Subtasks` list is
-   what the orchestrator and `/tasks cmplt` consume, so it is mandatory.
+   what the orchestrator and `/flow cmplt` consume, so it is mandatory.
 2. **Group findings** into work packages (same file → same subtask; same concern → same group where files don't conflict; 1–5 findings per subtask).
 3. **Order by risk-adjusted priority:** CRITICAL security > CRITICAL bugs > HIGH bugs > HIGH security > MEDIUM everything else > LOW/CQ/ARCH.
 4. **Create numbered subtask files** (`001-*.md`, ...) with problem, files owned, fixes, tests, and validation.

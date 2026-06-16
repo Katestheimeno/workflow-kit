@@ -45,21 +45,21 @@ from the first group that still has incomplete subtasks.
    e. Cap at 2 correction rounds per subtask
 10. UPDATE the subtask's status to [COMPLETED] in the `## Subtasks` bullet list of
     MASTER_TASKS.md — validation must pass first. This bullet list is the canonical
-    status source the `/tasks cmplt` archive hook reads, so keep it accurate (use
+    status source the `/flow cmplt` archive hook reads, so keep it accurate (use
     [SKIPPED] for intentionally dropped subtasks, [BLOCKED] for stuck ones).
 11. MOVE to next parallel group
 ```
 
 ## Execution rules / checkpoints
 
-`/tasks impl` may hand you a free-form **rules** string from the user. Treat it as binding:
+`/flow impl` may hand you a free-form **rules** string from the user. Treat it as binding:
 
 - **"stop after each phase"** — after a parallel group completes and its validation passes,
   STOP, report what finished + validation results, and wait for the user before the next
   group. Do not start the next phase on your own.
 - **"stop after each subtask"** — pause after every subtask, not just every phase.
 - **"only phase N" / "only group X"** — implement just that slice, then stop.
-- **"don't run tests" / "skip validation"** — honor it, but warn that `/tasks cmplt` still
+- **"don't run tests" / "skip validation"** — honor it, but warn that `/flow cmplt` still
   requires subtasks marked [COMPLETED].
 
 With no rules string, run all phases to completion without pausing.

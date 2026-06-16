@@ -15,7 +15,7 @@ rules and prompts the generic core deliberately omits.
 | Path | Replaces / adds |
 |------|-----------------|
 | `agents/` | Django versions of all 10 agents (orchestrator, planner, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
-| `commands/` | Django versions of `/sweep` and `/tasks` |
+| `commands/` | Django versions of `/sweep` and `/flow` |
 | `prompts/` | Django `sweep.md`, plus `api-contract-validation.md`, `docs-alignment-audit.md`, `parallel-django-app-audit.md` |
 | `rules/` | `foundations.md`, `django.md`, `layers.md`, `api.md`, `quality.md`, `testing.md`, `workflow.md`, `docs.md` |
 
