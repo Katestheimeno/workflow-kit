@@ -17,11 +17,20 @@ present today.
 /retro last week                A single week
 /retro 2026-06-01..2026-06-14   An explicit date range (inclusive)
 /retro since 2026-06-01         From a date through today
+/retro update                   Extend the most recent retro through today (incremental)
+/retro --new                    Force a brand-new package even if a recent one overlaps
 /retro Q2 auth hardening        N weeks (default 2) + a theme hint to frame the narrative
 ```
 
-Anything in `$ARGUMENTS` that is **not** a recognized period token is treated as a **theme hint** —
-free text used to frame the executive narrative and grouping, never to filter out changes.
+**Re-running is incremental by default.** If a recent retrospective package already exists, `/retro`
+**extends it** — it appends only the changes/commits that landed since the package was last updated,
+adds new `CHANGE-NN` records continuing the numbering, recomputes the aggregate views, and preserves
+every existing record and any manual notes. It does **not** rebuild records that are already written.
+Use `--new` to force a fresh, separate package, or pass an explicit `{date}..{date}` range to target
+a specific window.
+
+Anything in `$ARGUMENTS` that is **not** a recognized period token or flag is treated as a **theme
+hint** — free text used to frame the executive narrative and grouping, never to filter out changes.
 
 ## Instructions
 
@@ -55,13 +64,48 @@ $ARGUMENTS
 2. **Separate the theme hint.** Strip recognized period tokens from `$ARGUMENTS`; whatever remains
    is the theme hint. If empty, infer the theme yourself in Phase 2.
 
-3. **Build the output directory** named by the resolved range:
-   ```
-   docs/retrospectives/{START}_to_{END}/
-   ```
-   Example: `docs/retrospectives/2026-06-07_to_2026-06-20/`. Create it (and any parent dirs). If it
-   already exists, treat this as a **regeneration** — read existing files first, preserve any
-   manually added context (notes, corrections), and refresh the rest.
+3. **Decide: extend an existing package, or create a new one.** List `docs/retrospectives/*/`
+   directories (each named `{START}_to_{END}`). Then:
+
+   - **`--new` flag present** → skip straight to creating a new package (below).
+   - **`update` keyword, or no period token given** → find the **most recent** existing package
+     (latest `END` in its name) and **extend it** (see Phase 1b). This is the default for a bare
+     `/retro` re-run.
+   - **An explicit `{date}..{date}` or `since` range** → if a package's name matches that exact
+     `START`, extend that package; otherwise create a new one for the given range.
+   - **A relative window** (`N weeks`, `last week`) → if it overlaps an existing package's range,
+     **extend** that package (advancing its `END` to today); otherwise create a new one.
+
+   **Create a new package** → make `docs/retrospectives/{START}_to_{END}/` (and parent dirs) and
+   proceed through Phase 1 → Phase 2 in full.
+
+   **Extend a package** → keep its directory; you will advance its `END` to today, rename the
+   directory to the new `{START}_to_{END}` with `git mv` (so history is preserved), and run the
+   incremental path in Phase 1b before writing.
+
+   When in doubt about which package to touch, state your choice (extend vs. new, and which folder)
+   in the final report so the user can redirect you.
+
+### Phase 1b — Incremental update (only when extending an existing package)
+
+When extending, do **not** regenerate existing records. Instead:
+
+1. **Read the existing package** — `README.md`, `01-change-inventory.md`, and every
+   `changes/CHANGE-NN-*.md`. Note the highest `CHANGE-NN` number and collect the set of commit
+   hashes already recorded (each record lists its `Commits:`). This commit set is the watermark.
+2. **Find only new work** — run the Phase 1 git queries for the window `{last-covered date}` →
+   `today`, then filter out any commit whose hash is already in the watermark. What remains is the
+   delta. If the delta is empty, report "No new changes since {last update}" and stop without
+   rewriting anything.
+3. **Append, don't rewrite** — create one new `changes/CHANGE-NN-{slug}.md` per discrete new change,
+   continuing the numbering from the highest existing record. Leave existing records untouched
+   except to add backward `Linked changes` references where a new change genuinely affects an old one.
+4. **Recompute the aggregates** — append new rows to `01-change-inventory.md`; extend
+   `02-timeline.md` with the new dates; refresh `03-open-items-and-risks.md` and `04-challenges.md`
+   from the combined set; update affected `by-area/*.md` pages (adding new area pages if needed);
+   regenerate `presentation/` material to cover the full extended period; update the README's
+   `END` date, `Generated` timestamp, weeks-covered list, and at-a-glance metrics.
+5. **Preserve manual context** — never delete human-added notes or corrections in any file.
 
 ### Phase 1 — Discovery (do this silently, before writing anything)
 
@@ -242,7 +286,9 @@ drill into a single domain on demand.
 ### Phase 3 — Report
 
 After writing the package, report to the user:
-- The output directory path.
+- The output directory path, and whether this was a **new package** or an **extension** of an
+  existing one (and if extended: how many new `CHANGE-NN` records were appended, or that there were
+  no new changes since the last update).
 - A tree of the files created/updated.
 - Counts: changes inventoried, commits covered, areas, open items.
 - Any weeks in range that lacked a pre-existing weekly summary (generated inline).
@@ -262,7 +308,8 @@ After writing the package, report to the user:
   point; no file is an orphan.
 - **Weekly summaries are the backbone, git is the truth.** Prefer the narrative already captured in
   `docs/changes/`; use git to verify it and fill any gaps.
-- **Regeneration-safe.** Re-running for the same range refreshes generated content but preserves any
-  human-added notes or corrections.
+- **Incremental by default.** Re-running extends the most recent package — it appends new `CHANGE-NN`
+  records for work that landed since the last update and recomputes the aggregate views, without
+  rewriting existing records or deleting human-added notes. Use `--new` to force a fresh package.
 - **Audience-aware.** Technical language for a developer audience in the change records; the
   presentation/ material is framed for stakeholders.
