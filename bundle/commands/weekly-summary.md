@@ -5,11 +5,17 @@ Generate or update a structured weekly work summary based on git history and pro
 ## Usage
 
 ```
-/weekly-summary
-/weekly-summary 2026-06-09
+/weekly-summary                  This week (default)
+/weekly-summary last week        The previous week
+/weekly-summary week before      Two weeks ago
+/weekly-summary 2 weeks ago      N weeks ago (any N)
+/weekly-summary 2026-06-09       The week containing a specific date
+/weekly-summary June 9           The week containing a natural-language date
 ```
 
-Pass a date within the target week to generate/update that week's summary instead of the current week.
+Pass **either** a date within the target week **or** a relative week reference
+(`last week`, `week before`, `previous week`, `N weeks ago`) to generate/update that
+week's summary instead of the current week. With no argument, the current week is used.
 
 ## Instructions
 
@@ -23,7 +29,24 @@ $ARGUMENTS
 
 ### Phase 0 — Determine the target week
 
-1. **Parse arguments.** If `$ARGUMENTS` contains a date (any format: `YYYY-MM-DD`, `June 9`, `last week`, etc.), resolve it to a calendar date. Otherwise use today's date.
+1. **Parse arguments.** Resolve `$ARGUMENTS` to a single calendar date inside the target week:
+   - **Empty** → use today's date.
+   - **Relative week reference** → resolve against today, then pick any date in that week:
+     - `this week` / `current week` → today
+     - `last week` / `previous week` → today minus 7 days
+     - `week before` / `the week before last` → today minus 14 days
+     - `N weeks ago` (e.g. `2 weeks ago`, `3 weeks back`) → today minus `N × 7` days
+   - **Explicit date** (any format: `YYYY-MM-DD`, `June 9`, `9 June 2026`) → use it directly.
+
+   Resolve relative references with the shell so they are unambiguous, e.g.:
+   ```bash
+   date +%F                          # today (this week)
+   date -d "7 days ago" +%F          # last week
+   date -d "14 days ago" +%F         # week before
+   date -d "21 days ago" +%F         # 3 weeks ago
+   ```
+   If `$ARGUMENTS` is ambiguous (e.g. you cannot tell whether it is a date or a relative
+   reference), state your interpretation in the final report so the user can correct it.
 
 2. **Calculate week boundaries.** Weeks run **Monday–Sunday**. From the resolved date:
    - Find the Monday of that week (week start)
