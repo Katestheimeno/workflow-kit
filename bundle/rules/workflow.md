@@ -7,13 +7,40 @@ code looks like.
 
 ---
 
+## 0. Task sizing — how much ceremony
+
+Classify the task before doing anything else. The size sets how much planning is
+required; it refines the "Simple task vs Feature" split in `CLAUDE_ENTRYPOINT.md`.
+
+| Size | Criteria | Requirement |
+|------|----------|-------------|
+| **Micro** | one file, one function, no cross-module impact | just do it; log a line in `general/SESSION_LOG.md` |
+| **Small** | 1–3 files, single module/layer | 3–5 bullet inline plan, then proceed |
+| **Medium** | 2–5 files, 2 layers, or touches shared code | `/flow pln` — reviewed `MASTER_TASKS` plan |
+| **Large** | 5+ files, 3+ layers, new module, or new shared primitive | `/flow pln` + explicit scope confirmation |
+| **Epic** | multi-session; auth / data-schema / navigation changes | decompose into sub-features, one per `/flow` run |
+
+When ambiguous, classify **one level higher** — never downgrade to skip planning.
+
+**Reclassification.** If a task outgrows its size mid-flight, stop and say so explicitly
+(`RECLASSIFICATION: <old> → <new> — <what forced it>`), then escalate ceremony to match
+(Small→Medium means stop and run `/flow pln`, carrying progress forward). Silent scope
+expansion is a protocol violation.
+
 ## 1. Clarification gate — ask before you build
 
 After reading context and understanding the task:
 
 1. **Identify unknowns.** List anything ambiguous: scope boundaries, naming choices, architectural decisions, dependencies on unfinished work, unclear acceptance criteria.
-2. **If unknowns exist:** ask the user concise, specific questions. Do not guess. Do not proceed until answers are in.
-3. **If everything is clear:** state your understanding in 2–3 sentences and move to parallel execution immediately. Do not ask for permission to start — clarity is the gate, not approval.
+2. **Must ask** (don't guess) when any of these hold:
+   - **Scope ambiguity** — the request has 2+ meaningfully different readings.
+   - **Architectural impact** — it crosses module/layer boundaries, adds an entity, or changes a data contract.
+   - **Requirement gap** — *what* is clear but *why/how* is missing and would change the approach.
+   - **Conflicting decision** — it contradicts a locked decision (see `assumptions.md` conflict block).
+   - **Destructive / irreversible** operation, or a **new external dependency**.
+3. **Question discipline:** one block, **max 5 questions**, ranked by how blocking they are; prefer binary/enumerated over open-ended. Do not ask after you've already started writing code.
+4. **Completeness check** — *what, why, how* must all be answerable before implementation.
+5. **If everything is clear:** state your understanding in 2–3 sentences and move to parallel execution immediately. Do not ask for permission to start — clarity is the gate, not approval.
 
 ## 2. Parallel-first execution
 
