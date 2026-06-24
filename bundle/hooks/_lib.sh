@@ -71,7 +71,10 @@ wk_over_cap() {
       [[ -z "$pat" ]] && continue
       # shellcheck disable=SC2254
       case "$rel" in $pat) return 0 ;; esac
-    done < <(awk '/^exclude_line_cap:/{f=1;next} f&&/^[[:space:]]*-/{sub(/^[[:space:]]*-[[:space:]]*/,"");gsub(/["'"'"']/,"");print} f&&/^[^[:space:]-]/{f=0}' "$cfg" 2>/dev/null || true)
+    # The print rule mutates $0 (sub/gsub), so it MUST `next` — otherwise the
+    # following f=0 rule sees the rewritten bare glob (a non-space first char) and
+    # ends the list after the first entry.
+    done < <(awk '/^exclude_line_cap:/{f=1;next} f&&/^[[:space:]]*-/{sub(/^[[:space:]]*-[[:space:]]*/,"");gsub(/["'"'"']/,"");print;next} f&&/^[^[:space:]-]/{f=0}' "$cfg" 2>/dev/null || true)
   fi
   echo "$lines"
 }

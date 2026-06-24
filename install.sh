@@ -279,6 +279,9 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
     fi
+    if [[ -f "${BUNDLE_DIR}/config.yml.example" ]]; then
+      echo "[dry-run] cp ${BUNDLE_DIR}/config.yml.example ${CLAUDE_DIR}/"
+    fi
   else
     mkdir -p "${CLAUDE_DIR}"
     cp "${BUNDLE_DIR}/CLAUDE_ENTRYPOINT.md" "${CLAUDE_DIR}/"
@@ -290,6 +293,9 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
     fi
+    if [[ -f "${BUNDLE_DIR}/config.yml.example" ]]; then
+      cp "${BUNDLE_DIR}/config.yml.example" "${CLAUDE_DIR}/"
+    fi
   fi
   merge_content_dirs
   apply_overlay
@@ -297,7 +303,7 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "[dry-run] done (protocol-only)."
   else
-    echo "workflow-kit: refreshed entrypoint, example-feature/, content dirs (agents/ commands/ rules/ prompts/ skills/), hook scripts, and settings.json.example under ${CLAUDE_DIR}"
+    echo "workflow-kit: refreshed entrypoint, example-feature/, content dirs (agents/ commands/ rules/ prompts/ skills/), hook scripts, settings.json.example, and config.yml.example under ${CLAUDE_DIR}"
     print_hooks_prompt "${CLAUDE_DIR}"
   fi
   exit 0
@@ -341,6 +347,9 @@ install_claude_tree() {
     if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
       echo "[dry-run] cp ${BUNDLE_DIR}/settings.json.example ${CLAUDE_DIR}/"
     fi
+    if [[ -f "${BUNDLE_DIR}/config.yml.example" ]]; then
+      echo "[dry-run] cp ${BUNDLE_DIR}/config.yml.example ${CLAUDE_DIR}/"
+    fi
     return
   fi
 
@@ -358,6 +367,9 @@ install_claude_tree() {
   apply_overlay
   if [[ -f "${BUNDLE_DIR}/settings.json.example" ]]; then
     cp "${BUNDLE_DIR}/settings.json.example" "${CLAUDE_DIR}/"
+  fi
+  if [[ -f "${BUNDLE_DIR}/config.yml.example" ]]; then
+    cp "${BUNDLE_DIR}/config.yml.example" "${CLAUDE_DIR}/"
   fi
 }
 

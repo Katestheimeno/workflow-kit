@@ -247,6 +247,9 @@ if ($OnlyProtocol) {
     if (Test-Path -LiteralPath (Join-Path $BundleDir 'settings.json.example') -PathType Leaf) {
       Write-Host "[dry-run] cp $(Join-Path $BundleDir 'settings.json.example') $ClaudeDir\"
     }
+    if (Test-Path -LiteralPath (Join-Path $BundleDir 'config.yml.example') -PathType Leaf) {
+      Write-Host "[dry-run] cp $(Join-Path $BundleDir 'config.yml.example') $ClaudeDir\"
+    }
   } else {
     New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
     Copy-Item -LiteralPath (Join-Path $BundleDir 'CLAUDE_ENTRYPOINT.md') -Destination $ClaudeDir -Force
@@ -255,6 +258,9 @@ if ($OnlyProtocol) {
     if (Test-Path -LiteralPath (Join-Path $BundleDir 'settings.json.example') -PathType Leaf) {
       Copy-Item -LiteralPath (Join-Path $BundleDir 'settings.json.example') -Destination $ClaudeDir -Force
     }
+    if (Test-Path -LiteralPath (Join-Path $BundleDir 'config.yml.example') -PathType Leaf) {
+      Copy-Item -LiteralPath (Join-Path $BundleDir 'config.yml.example') -Destination $ClaudeDir -Force
+    }
   }
   Merge-ContentDirs $ClaudeDir
   Apply-Overlay $ClaudeDir
@@ -262,7 +268,7 @@ if ($OnlyProtocol) {
   if ($DryRun) {
     Write-Host '[dry-run] done (protocol-only).'
   } else {
-    Write-Host "workflow-kit: refreshed entrypoint, example-feature\, content dirs (agents\ commands\ rules\ prompts\ skills\), hook scripts, and settings.json.example under $ClaudeDir"
+    Write-Host "workflow-kit: refreshed entrypoint, example-feature\, content dirs (agents\ commands\ rules\ prompts\ skills\), hook scripts, settings.json.example, and config.yml.example under $ClaudeDir"
     Write-HooksPrompt $ClaudeDir
   }
   exit 0
@@ -308,6 +314,9 @@ function Install-ClaudeTree {
     if (Test-Path -LiteralPath (Join-Path $BundleDir 'settings.json.example') -PathType Leaf) {
       Write-Host "[dry-run] cp bundle\settings.json.example $ClaudeDir\"
     }
+    if (Test-Path -LiteralPath (Join-Path $BundleDir 'config.yml.example') -PathType Leaf) {
+      Write-Host "[dry-run] cp bundle\config.yml.example $ClaudeDir\"
+    }
     return
   }
 
@@ -321,6 +330,9 @@ function Install-ClaudeTree {
   Apply-Overlay $ClaudeDir
   if (Test-Path -LiteralPath (Join-Path $BundleDir 'settings.json.example') -PathType Leaf) {
     Copy-Item -LiteralPath (Join-Path $BundleDir 'settings.json.example') -Destination $ClaudeDir -Force
+  }
+  if (Test-Path -LiteralPath (Join-Path $BundleDir 'config.yml.example') -PathType Leaf) {
+    Copy-Item -LiteralPath (Join-Path $BundleDir 'config.yml.example') -Destination $ClaudeDir -Force
   }
 }
 

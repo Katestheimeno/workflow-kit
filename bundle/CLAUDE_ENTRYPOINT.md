@@ -145,6 +145,9 @@ orchestration layer built on top of the checkpoint protocol:
   `design`, `ui-styling`, `slides`, `banner-design`, `brand`. Each carries its own
   `SKILL.md`; Claude loads them on demand for frontend/design work. Their provenance is in
   per-skill `SOURCE.md` files.
+- **`.claude/config.yml`** (optional) — kit configuration. Copy `config.yml.example` and set
+  `exclude_line_cap:` (globs exempt from the 250-line size cap, read by the hooks) and/or
+  `test_command:` (used first by `/test` before auto-discovery). The kit runs fine without it.
 
 These are **stack-agnostic** by default: they describe *how* work flows through agents,
 deferring stack-specific conventions to `.claude/rules/` and `.claude/CONTEXT_MAP.md`.
