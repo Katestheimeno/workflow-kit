@@ -12,7 +12,7 @@ $VersionFile     = Join-Path $ScriptDir 'VERSION'
 $CanonicalSource = 'git@github.com:Katestheimeno/workflow-kit.git'
 
 # Kit-owned content directories copied (merged) into .claude\ on install and refresh.
-$ContentDirs = @('agents', 'commands', 'rules', 'prompts')
+$ContentDirs = @('agents', 'commands', 'rules', 'prompts', 'skills')
 
 # --- option state ---
 $DryRun          = $false
@@ -33,7 +33,7 @@ Options:
   --force              If .claude\ already exists, move it to .claude.bak.<epoch> then full install.
   --no-claude-example  Do not copy CLAUDE.md.example to TARGET_DIR.
   --only-protocol      Refresh only CLAUDE_ENTRYPOINT.md, example-feature\, and the kit-owned
-                       content dirs (agents\ commands\ rules\ prompts\) from the bundle.
+                       content dirs (agents\ commands\ rules\ prompts\ skills\) from the bundle.
                        Requires an existing install (.claude\CLAUDE_ENTRYPOINT.md). Does not modify
                        tasks\, CONTEXT_MAP.md, or CLAUDE.md.example. Writes/updates .claude\WORKFLOW_KIT.
   --overlay NAME       After the generic core, apply a stack overlay from bundle\overlays\NAME\
@@ -83,14 +83,22 @@ function Merge-OneDir([string]$src, [string]$dst) {
   if (-not (Test-Path -LiteralPath $src)) { return }
   if ($DryRun) {
     Write-Host "[dry-run] mkdir -p $dst"
-    Get-ChildItem -LiteralPath $src -File | ForEach-Object {
+    Get-ChildItem -LiteralPath $src | ForEach-Object {
       Write-Host "[dry-run] cp $($_.FullName) $dst\"
     }
     return
   }
   New-Item -ItemType Directory -Force -Path $dst | Out-Null
-  Get-ChildItem -LiteralPath $src -File | ForEach-Object {
-    Copy-Item -LiteralPath $_.FullName -Destination $dst -Force
+  Get-ChildItem -LiteralPath $src | ForEach-Object {
+    if ($_.PSIsContainer) {
+      # nested content (e.g. skills\<name>\): replace the kit-owned subdir wholesale,
+      # leaving unrelated user subdirs in place.
+      $dest = Join-Path $dst $_.Name
+      if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force }
+      Copy-Item -LiteralPath $_.FullName -Destination $dst -Recurse -Force
+    } else {
+      Copy-Item -LiteralPath $_.FullName -Destination $dst -Force
+    }
   }
 }
 
@@ -98,7 +106,7 @@ function Merge-HooksDir([string]$claudeDir) {
   Merge-OneDir (Join-Path $BundleDir 'hooks') (Join-Path $claudeDir 'hooks')
 }
 
-# Copy the kit-owned content dirs (agents\ commands\ rules\ prompts\) into .claude\.
+# Copy the kit-owned content dirs (agents\ commands\ rules\ prompts\ skills\) into .claude\.
 function Merge-ContentDirs([string]$claudeDir) {
   foreach ($d in $ContentDirs) {
     Merge-OneDir (Join-Path $BundleDir $d) (Join-Path $claudeDir $d)
@@ -142,7 +150,8 @@ workflow-kit: hooks are installed but NOT yet wired up.
   Hooks that will run once enabled (require a bash runtime, e.g. Git Bash):
     - UserPromptSubmit -> hooks/checkpoint.sh         (injects the checkpoint protocol + active feature)
     - SessionStart     -> hooks/session-start.sh      (prints active-feature state)
-    - PostToolUse      -> hooks/progress-heartbeat.sh (feature-completion + scope-drift warnings)
+    - PostToolUse      -> hooks/progress-heartbeat.sh (feature-completion + scope-drift + size-cap warnings)
+    - PostToolUse      -> hooks/guard-bash-writes.sh  (size-cap on in-place bash writes: sed -i, tee, truncate, >)
     - Stop             -> hooks/validate-state.sh     (checks state invariants)
 
   Manual tool (invoke when a feature is done):
@@ -253,7 +262,7 @@ if ($OnlyProtocol) {
   if ($DryRun) {
     Write-Host '[dry-run] done (protocol-only).'
   } else {
-    Write-Host "workflow-kit: refreshed entrypoint, example-feature\, content dirs (agents\ commands\ rules\ prompts\), hook scripts, and settings.json.example under $ClaudeDir"
+    Write-Host "workflow-kit: refreshed entrypoint, example-feature\, content dirs (agents\ commands\ rules\ prompts\ skills\), hook scripts, and settings.json.example under $ClaudeDir"
     Write-HooksPrompt $ClaudeDir
   }
   exit 0
@@ -340,7 +349,7 @@ if ($DryRun) {
 } else {
   $overlayNote = if ([string]::IsNullOrEmpty($Overlay)) { '' } else { " (+ $Overlay overlay)" }
   Write-Host "workflow-kit: installed .claude\ task checkpoint under $ClaudeDir"
-  Write-Host "workflow-kit: orchestration layer installed: agents\ commands\ rules\ prompts\$overlayNote"
+  Write-Host "workflow-kit: orchestration layer installed: agents\ commands\ rules\ prompts\ skills\$overlayNote"
   Write-Host "workflow-kit: read $Entrypoint first for every AI-assisted session."
   Write-HooksPrompt $ClaudeDir
 }

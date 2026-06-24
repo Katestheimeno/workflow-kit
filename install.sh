@@ -16,7 +16,7 @@ OVERLAY=""
 TARGET_ARG=""
 
 # Kit-owned content directories copied (merged) into .claude/ on install and refresh.
-CONTENT_DIRS=(agents commands rules prompts)
+CONTENT_DIRS=(agents commands rules prompts skills)
 
 usage() {
   cat <<EOF
@@ -29,7 +29,7 @@ Options:
   --force              If .claude/ already exists, move it to .claude.bak.<epoch> then full install.
   --no-claude-example  Do not copy CLAUDE.md.example to TARGET_DIR.
   --only-protocol      Refresh only CLAUDE_ENTRYPOINT.md, example-feature/, and the kit-owned
-                       content dirs (agents/ commands/ rules/ prompts/) from the bundle.
+                       content dirs (agents/ commands/ rules/ prompts/ skills/) from the bundle.
                        Requires an existing install (.claude/CLAUDE_ENTRYPOINT.md). Does not modify
                        tasks/, CONTEXT_MAP.md, or CLAUDE.md.example. Writes/updates .claude/WORKFLOW_KIT.
   --overlay NAME       After the generic core, apply a stack overlay from bundle/overlays/NAME/
@@ -180,7 +180,7 @@ merge_hooks_dir() {
 }
 
 # Merge one bundle subdir into .claude/<name>/ file-by-file (overwrites kit-owned files,
-# leaves any unrelated user files in place). Used for agents/ commands/ rules/ prompts/.
+# leaves any unrelated user files in place). Used for agents/ commands/ rules/ prompts/ skills/.
 merge_one_dir() {
   local src="$1"
   local dst="$2"
@@ -195,14 +195,22 @@ merge_one_dir() {
     return 0
   fi
   mkdir -p "$dst"
-  local f
+  local f base
   for f in "$src"/*; do
     [[ -e "$f" ]] || continue
-    cp "$f" "$dst/"
+    base="$(basename "$f")"
+    if [[ -d "$f" ]]; then
+      # nested content (e.g. skills/<name>/): replace the kit-owned subdir wholesale,
+      # leaving unrelated user subdirs in place.
+      rm -rf "${dst:?}/${base}"
+      cp -r "$f" "$dst/"
+    else
+      cp "$f" "$dst/"
+    fi
   done
 }
 
-# Copy the kit-owned content dirs (agents/ commands/ rules/ prompts/) into .claude/.
+# Copy the kit-owned content dirs (agents/ commands/ rules/ prompts/ skills/) into .claude/.
 merge_content_dirs() {
   local d
   for d in "${CONTENT_DIRS[@]}"; do
@@ -240,7 +248,8 @@ workflow-kit: hooks are installed but NOT yet wired up.
   Hooks that will run once enabled:
     - UserPromptSubmit → hooks/checkpoint.sh         (injects the checkpoint protocol + active feature)
     - SessionStart     → hooks/session-start.sh      (prints active-feature state)
-    - PostToolUse      → hooks/progress-heartbeat.sh (feature-completion + scope-drift warnings)
+    - PostToolUse      → hooks/progress-heartbeat.sh (feature-completion + scope-drift + size-cap warnings)
+    - PostToolUse      → hooks/guard-bash-writes.sh  (size-cap on in-place bash writes: sed -i, tee, truncate, >)
     - Stop             → hooks/validate-state.sh     (checks state invariants)
 
   Manual tool (invoke when a feature is done):
@@ -288,7 +297,7 @@ if [[ "${ONLY_PROTOCOL}" -eq 1 ]]; then
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "[dry-run] done (protocol-only)."
   else
-    echo "workflow-kit: refreshed entrypoint, example-feature/, content dirs (agents/ commands/ rules/ prompts/), hook scripts, and settings.json.example under ${CLAUDE_DIR}"
+    echo "workflow-kit: refreshed entrypoint, example-feature/, content dirs (agents/ commands/ rules/ prompts/ skills/), hook scripts, and settings.json.example under ${CLAUDE_DIR}"
     print_hooks_prompt "${CLAUDE_DIR}"
   fi
   exit 0
@@ -376,7 +385,7 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "[dry-run] done."
 else
   echo "workflow-kit: installed .claude/ task checkpoint under ${CLAUDE_DIR}"
-  echo "workflow-kit: orchestration layer installed: agents/ commands/ rules/ prompts/${OVERLAY:+ (+ ${OVERLAY} overlay)}"
+  echo "workflow-kit: orchestration layer installed: agents/ commands/ rules/ prompts/ skills/${OVERLAY:+ (+ ${OVERLAY} overlay)}"
   echo "workflow-kit: read ${ENTRYPOINT} first for every AI-assisted session."
   print_hooks_prompt "${CLAUDE_DIR}"
 fi
