@@ -17,12 +17,13 @@ Version: [VERSION](VERSION). Changelog: [CHANGELOG.md](CHANGELOG.md). License: [
 | `.claude/tasks/general/SESSION_LOG.md` | Append-only log for small tasks |
 | `.claude/tasks/completed/`, `archive/` | Placeholders for summaries |
 | `.claude/example-feature/` | README, example `MASTER_TASKS.md` and `001-example-subtask.md` |
-| `.claude/hooks/` | Shell scripts: `checkpoint.sh`, `session-start.sh`, `progress-heartbeat.sh`, `validate-state.sh`, `archive-feature.sh`, `ensure-tasks.sh`, shared `_lib.sh` |
+| `.claude/hooks/` | Shell scripts: `checkpoint.sh`, `session-start.sh`, `progress-heartbeat.sh`, `guard-bash-writes.sh`, `validate-state.sh`, `archive-feature.sh`, `ensure-tasks.sh`, shared `_lib.sh` |
 | `.claude/agents/` | 10 stack-agnostic role agents (orchestrator, planner, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
-| `.claude/commands/` | `/flow` (router: `pln` plan + review, `impl` orchestrated execution, `cmplt` archive), `/sweep` (deep domain/context analysis → remediation plan), `/mem` (persistent cross-session memory), `/recover` (reconstruct in-flight work), `/pause` (checkpoint a subtask), `/pr-notes` (PR description / CHANGELOG), `/commit`, `/retro`, `/weekly-summary` |
+| `.claude/commands/` | `/flow` (router: `pln` plan + review, `impl` orchestrated execution, `cmplt` archive), `/sweep` (deep domain/context analysis → remediation plan), `/mem` (persistent cross-session memory), `/recover` (reconstruct in-flight work), `/pause` (checkpoint a subtask), `/pr-notes` (PR description / CHANGELOG), `/debug` (structured bug investigation), `/test` (run suite + gate `/commit`), `/commit`, `/retro`, `/weekly-summary` |
 | `.claude/memory/` | `MEMORY.md` index + `<type>_<slug>.md` files — persistent project memory managed by `/mem`, bootstrapped by `ensure-tasks.sh` |
-| `.claude/rules/` | `workflow.md` (agent orchestration protocol), `quality.md` (Definition of Done), `testing.md` (testing discipline), `audit-loop.md` (tiered self-audit before review), `file-architecture.md` (250/60 size caps + split), `context7.md` (fetch current library docs via Context7 MCP) |
+| `.claude/rules/` | `workflow.md` (orchestration protocol + task sizing + clarification gate), `quality.md` (Definition of Done), `testing.md` (testing discipline), `audit-loop.md` (tiered self-audit before review), `file-architecture.md` (250/60 size caps + split), `context7.md` (fetch current library docs via Context7 MCP), `assumptions.md` (assumption transparency + conflict detection), `output-standards.md` (response anatomy + Next Actions) |
 | `.claude/prompts/` | `sweep.md` (engine behind `/sweep`), `generate-commit-script.md`, `work-journal.md` |
+| `.claude/skills/` (optional) | Vendored UI/design skill library: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, `brand` — each self-describing via `SKILL.md`, loaded on demand for frontend work |
 | `.claude/settings.json.example` | Sample Claude Code `hooks` wiring; **you merge it** into `.claude/settings.json` to activate |
 | `CLAUDE.md.example` (optional) | Stub pointing at the entrypoint; copy or merge into your `CLAUDE.md` |
 
@@ -52,9 +53,14 @@ On top of the checkpoint protocol, the kit ships a multi-agent orchestration lay
 - **`/sweep <domain | free-text context>`** — runs five parallel analysis passes (bugs, performance, security, code quality, architecture) over a domain **or** any free-text theme you describe, verifies findings with an adversarial reviewer pass to kill false positives, and emits a prioritized remediation plan.
 - **`/mem`** — persistent cross-session memory (`save|apply|list|delete`). Stores project facts, preferences, corrections, and non-obvious decisions as `<type>_<slug>.md` files under `.claude/memory/`, indexed by `MEMORY.md`. It **applies** automatically at session start (the `session-start.sh` hook surfaces the index and Claude loads it) and **saves** at `/flow cmplt`, so the kit stops re-deriving the same constraints every chat.
 - **`/pause`, `/recover`, `/pr-notes`** — lifecycle helpers. `/pause` writes a resume checkpoint into the active `[IN_PROGRESS]` subtask so the next session continues cleanly. `/recover` reconstructs work after a session that ended without finishing — it inventories the dirty tree, reconciles it against task state, and proposes resume / reconstruct-plan / clean-commit / manual-triage (the `validate-state.sh` Stop hook points here when it sees uncommitted changes with no in-flight subtask). `/pr-notes` turns completed-feature summaries + branch git history into a PR description or CHANGELOG entry.
-- **`rules/workflow.md`** is the protocol all of this follows: clarification gate → parallel work → confirmation → plan → parallel implementation → cross-review.
+- **`/debug`, `/test`** — `/debug` drives a structured bug investigation (Reproduce → Isolate → Hypothesize → Test → Fix → Verify) and compiles a debug log that feeds `/commit`. `/test` discovers the project's test command, runs it, and gates `/commit` on the result — a failing run blocks; "no suite" is a documented skip.
+- **`rules/workflow.md`** is the protocol all of this follows: task sizing → clarification gate → parallel work → confirmation → plan → parallel implementation → cross-review. `assumptions.md` and `output-standards.md` govern how assumptions are surfaced and how responses are structured.
 
 To make the agents match your stack, fill in `.claude/rules/` with your layering/quality conventions (the kit ships generic `workflow.md`, `quality.md`, `testing.md`), or apply an overlay.
+
+### UI/design skills (optional)
+
+The bundle also vendors a stack-agnostic UI/design **skill library** under `.claude/skills/` — `ui-ux-pro-max` (a searchable database of styles, palettes, font pairings, and charts), the anti-slop `impeccable` and `design-taste-frontend`, plus `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, and `brand`. Each is self-describing via its `SKILL.md`, so Claude loads them on demand for frontend/design work; per-skill `SOURCE.md` files record provenance. They install with the rest of the content dirs and carry no dependency on the orchestration layer.
 
 ## Stack overlays
 

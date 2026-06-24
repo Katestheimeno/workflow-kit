@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `/pause` (`commands/pause.md`) — intentional mid-task suspension. Writes a `## ⏸ Pause checkpoint` into the active `[IN_PROGRESS]` subtask (status unchanged) and logs to `SESSION_LOG.md`, so the next session resumes from the next step.
   - `/pr-notes` (`commands/pr-notes.md`) — generate a PR description or CHANGELOG entry from `completed/*.md` feature summaries + branch git history (distinct from `/commit`, `/retro`, `/weekly-summary`).
   - `hooks/validate-state.sh` now suggests `/recover` when the source tree is dirty with no `[IN_PROGRESS]` subtask, and `/pause` when collapsing multiple in-progress subtasks.
+- **More discipline + investigation** (ported and adapted from claude-workflow-kit):
+  - `rules/assumptions.md` — assumption transparency (Type A/B/C/D classification + disclosure block) and conflict detection against locked decisions.
+  - `rules/output-standards.md` — response anatomy, code-block file labeling, and the mandatory Next Actions block, calibrated to task size.
+  - `rules/workflow.md` gains a **task-sizing** section (Micro/Small/Medium/Large/Epic → how much planning ceremony, with a reclassification rule) and a deeper **clarification gate** (must-ask triggers, max-5-question discipline, what/why/how check).
+  - `/debug` (`commands/debug.md`) — structured bug investigation (Reproduce → Isolate → Hypothesize → Test → Fix → Verify) that compiles a debug log for `/commit`.
+  - `/test` (`commands/test.md`) — discover the project's test command, run it, and gate `/commit` on the result; "no suite" is a documented skip, not a silent pass.
+- **`hooks/guard-bash-writes.sh`** — new `PostToolUse(Bash)` hook that catches in-place writes (`sed -i`, `awk -i inplace`, `tee`, `truncate`, `>` redirection) which bypass the `Edit`/`Write` hook, and enforces the 250-line size cap on the files they touch. Closes the gap where shell rewrites escaped `progress-heartbeat.sh`. The shared cap/exemption logic now lives in `_lib.sh` (`wk_over_cap`), reused by both hooks. Wired in `settings.json.example`.
+- **UI/design skill library** (`bundle/skills/`, optional, stack-agnostic): vendored `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, and `brand`, each with its own `SKILL.md` (loaded on demand) and `SOURCE.md` provenance. `install.sh`/`install.ps1` now copy `skills/` as a content dir, and their merge step handles nested subdirectories (so a skill's `data/`/`scripts/`/`templates/` install intact and re-installs idempotently).
 
 ### Fixed
 

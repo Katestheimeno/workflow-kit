@@ -126,16 +126,25 @@ orchestration layer built on top of the checkpoint protocol:
   Lifecycle helpers: `/pause` checkpoints an in-flight subtask so the next session resumes
   cleanly; `/recover` reconstructs work after a session that ended without finishing
   (inventories drift, proposes resume/plan/commit/triage); `/pr-notes` generates a PR
-  description or CHANGELOG entry from completed-feature summaries + branch git history.
+  description or CHANGELOG entry from completed-feature summaries + branch git history;
+  `/debug` runs a structured bug investigation (Reproduce→Isolate→Hypothesize→Test→Fix→Verify);
+  `/test` discovers and runs the test suite and gates `/commit` on the result.
 - **`.claude/rules/`** — conventions the agents read as source of truth. `workflow.md` is
   the agent orchestration protocol; `quality.md` the Definition of Done; `testing.md` the
   testing discipline; `audit-loop.md` the tiered self-audit implementers run before review;
   `file-architecture.md` the 250/60 size caps + split procedure; `context7.md` the rule to
-  fetch current library docs via the Context7 MCP. Add your own `foundations.md`/layering
-  rules so agents match your stack. (A Django overlay ships these pre-filled — see the
-  kit's `bundle/overlays/`.)
+  fetch current library docs via the Context7 MCP; `assumptions.md` the assumption-transparency
+  + conflict-detection protocol; `output-standards.md` the response anatomy + Next-Actions
+  convention. Add your own `foundations.md`/layering rules so agents match your stack.
+  (A Django overlay ships these pre-filled — see the kit's `bundle/overlays/`.)
 - **`.claude/prompts/`** — `sweep.md` (the engine behind `/sweep`),
   `generate-commit-script.md`, `work-journal.md`.
+- **`.claude/skills/`** — optional UI/design skill library (vendored, stack-agnostic):
+  `ui-ux-pro-max` (searchable styles/palettes/typography/charts DB), `impeccable` and
+  `design-taste-frontend` (anti-slop frontend craft), `frontend-design`, `design-system`,
+  `design`, `ui-styling`, `slides`, `banner-design`, `brand`. Each carries its own
+  `SKILL.md`; Claude loads them on demand for frontend/design work. Their provenance is in
+  per-skill `SOURCE.md` files.
 
 These are **stack-agnostic** by default: they describe *how* work flows through agents,
 deferring stack-specific conventions to `.claude/rules/` and `.claude/CONTEXT_MAP.md`.
