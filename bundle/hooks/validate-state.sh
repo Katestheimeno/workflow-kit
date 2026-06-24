@@ -26,7 +26,15 @@ done
 shopt -u nullglob
 
 if [[ "$ip_total" -gt 1 ]]; then
-  wk_warn "Multiple [IN_PROGRESS] subtasks (${ip_total} total): ${ip_features[*]}. Collapse to one before continuing."
+  wk_warn "Multiple [IN_PROGRESS] subtasks (${ip_total} total): ${ip_features[*]}. Collapse to one (/pause to checkpoint the others, or /recover to reconcile)."
+fi
+
+# Dirty source tree but no in-flight subtask → a prior session may have ended mid-work.
+if [[ "$ip_total" -eq 0 ]]; then
+  dirty="$(git -C "$ROOT" status --porcelain 2>/dev/null | grep -v '\.claude/' | head -n1 || true)"
+  if [[ -n "$dirty" ]]; then
+    wk_warn "Uncommitted source changes but no [IN_PROGRESS] subtask. Run /recover to reconstruct in-flight work, or /commit if it's done."
+  fi
 fi
 
 plan_active="$(wk_active_feature "$ROOT" 2>/dev/null || true)"

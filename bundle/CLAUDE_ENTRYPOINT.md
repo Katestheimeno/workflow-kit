@@ -123,6 +123,10 @@ orchestration layer built on top of the checkpoint protocol:
   cross-session memory (`save|apply|list|delete`): it `apply`s automatically at session
   start (surfaced by `session-start.sh`) and `save`s at `/flow cmplt`, storing project
   facts, preferences, and constraints under `.claude/memory/` so they survive across chats.
+  Lifecycle helpers: `/pause` checkpoints an in-flight subtask so the next session resumes
+  cleanly; `/recover` reconstructs work after a session that ended without finishing
+  (inventories drift, proposes resume/plan/commit/triage); `/pr-notes` generates a PR
+  description or CHANGELOG entry from completed-feature summaries + branch git history.
 - **`.claude/rules/`** — conventions the agents read as source of truth. `workflow.md` is
   the agent orchestration protocol; `quality.md` the Definition of Done; `testing.md` the
   testing discipline; `audit-loop.md` the tiered self-audit implementers run before review;

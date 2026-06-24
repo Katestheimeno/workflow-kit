@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `rules/audit-loop.md` — tiered post-implementation self-audit (Architecture → Size/Perf → Types/Validation → Dependencies), scaled by diff size (Micro/Small/Medium+). The implementer runs it as the first gate before reporting; the `code-reviewer` agent remains the independent second gate. Wired into `agents/implementer.md` (self-pass + report the summary) and `agents/orchestrator.md` (confirm `✅ READY` before review).
   - `rules/file-architecture.md` — 250-line file / 60-line function caps + a stack-agnostic split procedure. `hooks/progress-heartbeat.sh` now warns (blocks in strict mode) when an edited source file exceeds 250 lines, honoring `exclude_line_cap` globs from `.claude/config.yml` and skipping generated files.
   - `rules/context7.md` — fetch current library/framework docs via the Context7 MCP before answering API/SDK/CLI questions.
+- **Lifecycle commands** (ported and adapted from claude-workflow-kit to this kit's task-state model):
+  - `/recover` (`commands/recover.md`) — reconstruct in-flight work after a session ended without finishing. Inventories the dirty tree, reconciles it against the `[IN_PROGRESS]` subtask + active feature, and proposes resume (`/flow impl`) / reconstruct-plan (`/flow pln`) / clean-commit (`/commit`) / manual-triage. `--triage` prints the inventory only.
+  - `/pause` (`commands/pause.md`) — intentional mid-task suspension. Writes a `## ⏸ Pause checkpoint` into the active `[IN_PROGRESS]` subtask (status unchanged) and logs to `SESSION_LOG.md`, so the next session resumes from the next step.
+  - `/pr-notes` (`commands/pr-notes.md`) — generate a PR description or CHANGELOG entry from `completed/*.md` feature summaries + branch git history (distinct from `/commit`, `/retro`, `/weekly-summary`).
+  - `hooks/validate-state.sh` now suggests `/recover` when the source tree is dirty with no `[IN_PROGRESS]` subtask, and `/pause` when collapsing multiple in-progress subtasks.
 
 ### Fixed
 
