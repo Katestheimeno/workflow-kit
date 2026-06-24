@@ -38,6 +38,14 @@ git log --oneline -5
 
 If there are no uncommitted changes (no modified, no untracked), tell the user "Nothing to commit" and stop.
 
+### Phase 0.5 — Confirm the test gate
+
+Before grouping commits, confirm the project's tests pass: either `/test` was run this
+session and reported a pass, or the suite is genuinely absent and that skip was documented
+(per `/test`'s skip protocol). If neither holds, tell the user to run `/test` first and stop —
+do not generate `commit-all.sh` on top of unverified changes. (If the user explicitly says to
+commit anyway, proceed and note in the response that the test gate was bypassed on request.)
+
 ### Phase 1 — Analyze changes
 
 1. Read the diff (`git diff HEAD`) to understand what each file's changes are about.
