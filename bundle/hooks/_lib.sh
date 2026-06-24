@@ -49,3 +49,29 @@ wk_active_feature() {
 }
 
 wk_today() { date -u +%Y-%m-%d; }
+
+# wk_over_cap <root> <file> — echo the line count if <file> exceeds the 250-line
+# size cap (rules/file-architecture.md) AND is not exempt; otherwise echo nothing.
+# Exemptions: kit-internal (.claude/), a built-in generated-file set, and any glob
+# under `exclude_line_cap:` in .claude/config.yml. Always returns 0.
+wk_over_cap() {
+  local root="$1" file="$2"
+  [[ -f "$file" ]] || return 0
+  case "$file" in
+    */.claude/*) return 0 ;;
+    *.lock|*-lock.*|*.min.*|*.snap|*/migrations/*|*.generated.*|*_pb2.py|*.g.dart) return 0 ;;
+  esac
+  local lines
+  lines=$(wc -l < "$file" 2>/dev/null || echo 0)
+  (( lines > 250 )) || return 0
+  local cfg="${root}/.claude/config.yml"
+  if [[ -f "$cfg" ]]; then
+    local rel="${file#"$root/"}" pat
+    while IFS= read -r pat; do
+      [[ -z "$pat" ]] && continue
+      # shellcheck disable=SC2254
+      case "$rel" in $pat) return 0 ;; esac
+    done < <(awk '/^exclude_line_cap:/{f=1;next} f&&/^[[:space:]]*-/{sub(/^[[:space:]]*-[[:space:]]*/,"");gsub(/["'"'"']/,"");print} f&&/^[^[:space:]-]/{f=0}' "$cfg" 2>/dev/null || true)
+  fi
+  echo "$lines"
+}

@@ -21,32 +21,11 @@ if [[ -n "$INPUT" ]]; then
 fi
 [[ -z "$FILE" ]] && exit 0
 
-# Size cap: warn when a non-generated source file exceeds 250 lines.
-# (see .claude/rules/file-architecture.md). Honors exclude_line_cap globs from
-# .claude/config.yml if present; otherwise skips a built-in generated-file set.
-if [[ -f "$FILE" ]]; then
-  case "$FILE" in
-    */.claude/*) ;;  # kit-internal files are exempt
-    *.lock|*-lock.*|*.min.*|*.snap|*/migrations/*|*.generated.*|*_pb2.py|*.g.dart) ;;
-    *)
-      lines=$(wc -l < "$FILE" 2>/dev/null || echo 0)
-      if (( lines > 250 )); then
-        excluded=0
-        cfg="${ROOT}/.claude/config.yml"
-        if [[ -f "$cfg" ]]; then
-          rel="${FILE#"$ROOT/"}"
-          while IFS= read -r pat; do
-            [[ -z "$pat" ]] && continue
-            # shellcheck disable=SC2254
-            case "$rel" in $pat) excluded=1; break ;; esac
-          done < <(awk '/^exclude_line_cap:/{f=1;next} f&&/^[[:space:]]*-/{sub(/^[[:space:]]*-[[:space:]]*/,"");gsub(/["'"'"']/,"");print} f&&/^[^[:space:]-]/{f=0}' "$cfg" 2>/dev/null || true)
-        fi
-        if (( excluded == 0 )); then
-          wk_warn "Size cap: ${FILE} is ${lines} lines (>250). See rules/file-architecture.md — split before continuing."
-        fi
-      fi
-      ;;
-  esac
+# Size cap: warn when a non-generated source file exceeds 250 lines
+# (see .claude/rules/file-architecture.md). Exemptions live in wk_over_cap.
+lines="$(wk_over_cap "$ROOT" "$FILE")"
+if [[ -n "$lines" ]]; then
+  wk_warn "Size cap: ${FILE} is ${lines} lines (>250). See rules/file-architecture.md — split before continuing."
 fi
 
 # Case 1: the edit is a MASTER_TASKS.md — check for feature completion.
