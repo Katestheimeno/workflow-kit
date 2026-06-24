@@ -1,3 +1,8 @@
+---
+description: Plan, implement, and complete trackable Django work via the orchestrator (subcommand router)
+argument-hint: pln|impl|cmplt <context | plan> [rules...]
+---
+
 # Flow
 
 Plan, implement, and complete trackable bodies of work. `/flow` is a small command

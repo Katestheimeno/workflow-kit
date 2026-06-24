@@ -1,3 +1,8 @@
+---
+description: Deep analysis sweep of a domain or theme — finds bugs/security/perf/quality issues, emits a verified remediation plan
+argument-hint: <domain | free-text context>
+---
+
 # Sweep
 
 Deep analysis sweep across a slice of this codebase. Finds bugs, security issues, performance problems, code-quality violations, and architecture concerns — then generates a verified, prioritized remediation plan.

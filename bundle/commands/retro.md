@@ -1,3 +1,8 @@
+---
+description: Produce a presentation-ready retrospective package (change inventory, timeline, slides) for a period
+argument-hint: "[period | YYYY-MM-DD..YYYY-MM-DD | update | --new]"
+---
+
 # Retrospective
 
 Produce a complete, presentation-ready **retrospective package** — not a single document, but a

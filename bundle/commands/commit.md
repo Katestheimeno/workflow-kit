@@ -1,3 +1,7 @@
+---
+description: Generate a self-deleting commit-all.sh that commits uncommitted changes as grouped, well-organized commits
+---
+
 # Generate Commit Script
 
 Create (or regenerate) a `commit-all.sh` bash script in the repo root that commits all currently uncommitted changes as a series of grouped, well-organized git commits.

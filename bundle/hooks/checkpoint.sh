@@ -20,6 +20,9 @@ fi
 cat <<EOF
 {
   "continue": true,
-  "additionalContext": "CHECKPOINT PROTOCOL (mandatory before acting):\n1. Read .claude/CONTEXT_MAP.md — full project state.\n2. Read .claude/tasks/MASTER_PLAN.md — active feature and queue.\n3. $FEATURE_LINE\n4. Update subtask Status: [IN_PROGRESS] when starting, [COMPLETED] when done (validation must pass first).\n5. When a feature completes: update MASTER_TASKS.md status, create .claude/tasks/completed/{feature}.md summary, move feature folder to .claude/tasks/archive/, update MASTER_PLAN.md (Active → none, add to Completed), update .claude/CONTEXT_MAP.md."
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "additionalContext": "CHECKPOINT PROTOCOL (mandatory before acting):\n1. Read .claude/CONTEXT_MAP.md — full project state.\n2. Read .claude/tasks/MASTER_PLAN.md — active feature and queue.\n3. $FEATURE_LINE\n4. Update subtask Status: [IN_PROGRESS] when starting, [COMPLETED] when done (validation must pass first).\n5. When a feature completes: update MASTER_TASKS.md status, create .claude/tasks/completed/{feature}.md summary, move feature folder to .claude/tasks/archive/, update MASTER_PLAN.md (Active → none, add to Completed), update .claude/CONTEXT_MAP.md."
+  }
 }
 EOF

@@ -1,3 +1,8 @@
+---
+description: Generate or update a structured weekly work summary from git history and project state
+argument-hint: "[period | YYYY-MM-DD]"
+---
+
 # Weekly Summary
 
 Generate or update a structured weekly work summary based on git history and project state.
