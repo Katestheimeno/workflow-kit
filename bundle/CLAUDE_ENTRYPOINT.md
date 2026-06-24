@@ -119,7 +119,10 @@ orchestration layer built on top of the checkpoint protocol:
   before presenting; `impl <plan> [rules]` dispatches the orchestrator to execute it (rules
   like "stop after each phase" become checkpoints); `cmplt <plan>` archives a finished plan
   via the `archive-feature.sh` hook. `/sweep <domain | free-text context>` runs a deep
-  analysis sweep and generates a verified remediation plan.
+  analysis sweep and generates a verified remediation plan. `/mem` is persistent
+  cross-session memory (`save|apply|list|delete`): it `apply`s automatically at session
+  start (surfaced by `session-start.sh`) and `save`s at `/flow cmplt`, storing project
+  facts, preferences, and constraints under `.claude/memory/` so they survive across chats.
 - **`.claude/rules/`** — conventions the agents read as source of truth. `workflow.md` is
   the agent orchestration protocol; add your own `foundations.md`/layering rules so agents
   match your stack. (A Django overlay ships these pre-filled — see the kit's

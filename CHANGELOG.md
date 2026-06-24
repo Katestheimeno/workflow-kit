@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Persistent cross-session memory** (`/mem`): new `.claude/commands/mem.md` router with `save|apply|list|delete` subcommands, storing project facts/preferences/constraints as `<type>_<slug>.md` files under `.claude/memory/` (indexed by `MEMORY.md`).
+  - `apply` runs automatically at session start — `session-start.sh` surfaces the memory index and directs Claude to load it.
+  - `save` runs automatically at `/flow cmplt` — completion now scans the session for memory-worthy items.
+  - `ensure-tasks.sh` bootstraps `.claude/memory/MEMORY.md` idempotently alongside the task scaffolding.
+
+### Fixed
+
+- `hooks/checkpoint.sh` now emits `additionalContext` under `hookSpecificOutput` with `hookEventName: "UserPromptSubmit"`, matching the current Claude Code hook contract. Previously the checkpoint reminder used a top-level `additionalContext` field that Claude Code does not read, so the protocol injection was being dropped.
+- All slash commands (`/flow`, `/sweep`, `/commit`, `/retro`, `/weekly-summary`, plus the django-overlay `/flow` and `/sweep`) now declare YAML frontmatter (`description`, and `argument-hint` where they take arguments), so they show proper text and argument hints in the `/` menu.
+
 ## [1.2.0] - 2026-06-13
 
 ### Added

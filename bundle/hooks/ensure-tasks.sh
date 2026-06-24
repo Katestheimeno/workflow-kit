@@ -36,6 +36,8 @@ ROOT="$(wk_find_root)" || {
 TASKS="${ROOT}/.claude/tasks"
 PLAN="${TASKS}/MASTER_PLAN.md"
 LOG="${TASKS}/general/SESSION_LOG.md"
+MEMORY="${ROOT}/.claude/memory"
+MEMORY_INDEX="${MEMORY}/MEMORY.md"
 
 CREATED=()
 
@@ -92,6 +94,15 @@ Date: (optional)
 
 ## Notes
 <!-- Freeform session notes. -->
+'
+
+# Persistent cross-session memory (consumed by the /mem command + session-start hook).
+ensure_dir  "${MEMORY}"       "memory"
+ensure_file "${MEMORY_INDEX}" "memory/MEMORY.md" '# Project Memory
+
+<!-- Index of persistent memories. One line per file, read in full at session start.
+     Format: - [Title](file.md) — one-line hook (under 150 chars). Keep under 200 lines.
+     Managed by the /mem command; files live alongside this index as <type>_<slug>.md. -->
 '
 
 if [[ "${QUIET}" -eq 1 ]]; then

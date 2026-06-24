@@ -44,6 +44,17 @@ else
   echo "No MASTER_PLAN.md at ${PLAN}"
 fi
 [[ -f "$MAP" ]] && echo "CONTEXT_MAP.md: $MAP"
+
+# Persistent memory: surface the index so Claude applies it this session.
+MEMORY_INDEX="${ROOT}/.claude/memory/MEMORY.md"
+if [[ -f "$MEMORY_INDEX" ]]; then
+  mem_entries="$(grep -c '^- \[' "$MEMORY_INDEX" 2>/dev/null || echo 0)"
+  if [[ "$mem_entries" -gt 0 ]]; then
+    echo "Memory: ${mem_entries} saved — run /mem apply to load constraints, or read:"
+    grep '^- \[' "$MEMORY_INDEX" | sed 's/^/  /'
+  fi
+fi
+
 if wk_strict; then
   echo "Strict mode: ON (WORKFLOW_KIT_STRICT=1) — drift will block tool calls."
 fi

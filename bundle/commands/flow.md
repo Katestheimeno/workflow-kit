@@ -248,6 +248,10 @@ Mark a plan complete and retire it. This wraps the kit hook
    - Offer to either finish them (`/flow impl <feature-name>`) or archive anyway with
      `--force`. Do **not** pass `--force` yourself unless the user explicitly asks.
 4. On success, relay the summary and archive paths the hook prints.
+5. **Persist memory.** Run the `/mem save` procedure (see `.claude/commands/mem.md`):
+   scan this feature's session for preferences, corrections, and non-obvious decisions
+   worth carrying forward, and record them under `.claude/memory/`. Report the
+   `MEM SAVED/UPDATED/SKIPPED` summary. Skip silently if nothing qualifies.
 
 ### What cmplt does NOT do
 
