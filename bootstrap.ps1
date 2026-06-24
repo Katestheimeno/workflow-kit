@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 $RepoDefault = 'git@github.com:Katestheimeno/workflow-kit.git'
 $Repo = if ($env:WORKFLOW_KIT_REPO) { $env:WORKFLOW_KIT_REPO } else { $RepoDefault }
 
-$Tag       = 'v1.2.0'
+$Tag       = 'v1.3.0'
 $TargetArg = ''
 $PassThru  = @()  # extra args forwarded to install.ps1 (e.g. --overlay django, --force)
 
@@ -22,7 +22,7 @@ Usage: bootstrap.ps1 [OPTIONS] <TARGET_PROJECT_DIR>
   install.ps1 against TARGET_PROJECT_DIR, then removes the clone.
 
 Options:
-  -t, --tag TAG   Git tag to clone (default: v1.2.0). Must exist on the remote.
+  -t, --tag TAG   Git tag to clone (default: v1.3.0). Must exist on the remote.
   -h, --help      Show this help.
 
   Any other options (e.g. --overlay django, --force, --only-protocol, --dry-run)

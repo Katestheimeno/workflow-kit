@@ -18,13 +18,14 @@ Version: [VERSION](VERSION). Changelog: [CHANGELOG.md](CHANGELOG.md). License: [
 | `.claude/tasks/completed/`, `archive/` | Placeholders for summaries |
 | `.claude/example-feature/` | README, example `MASTER_TASKS.md` and `001-example-subtask.md` |
 | `.claude/hooks/` | Shell scripts: `checkpoint.sh`, `session-start.sh`, `progress-heartbeat.sh`, `guard-bash-writes.sh`, `validate-state.sh`, `archive-feature.sh`, `ensure-tasks.sh`, shared `_lib.sh` |
-| `.claude/agents/` | 10 stack-agnostic role agents (orchestrator, planner, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
+| `.claude/agents/` | 11 stack-agnostic role agents (orchestrator, planner, plan-reviewer, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
 | `.claude/commands/` | `/flow` (router: `pln` plan + review, `impl` orchestrated execution, `cmplt` archive), `/sweep` (deep domain/context analysis → remediation plan), `/mem` (persistent cross-session memory), `/recover` (reconstruct in-flight work), `/pause` (checkpoint a subtask), `/pr-notes` (PR description / CHANGELOG), `/debug` (structured bug investigation), `/test` (run suite + gate `/commit`), `/commit`, `/retro`, `/weekly-summary` |
 | `.claude/memory/` | `MEMORY.md` index + `<type>_<slug>.md` files — persistent project memory managed by `/mem`, bootstrapped by `ensure-tasks.sh` |
 | `.claude/rules/` | `workflow.md` (orchestration protocol + task sizing + clarification gate), `quality.md` (Definition of Done), `testing.md` (testing discipline), `audit-loop.md` (tiered self-audit before review), `file-architecture.md` (250/60 size caps + split), `context7.md` (fetch current library docs via Context7 MCP), `assumptions.md` (assumption transparency + conflict detection), `output-standards.md` (response anatomy + Next Actions) |
 | `.claude/prompts/` | `sweep.md` (engine behind `/sweep`), `generate-commit-script.md`, `work-journal.md` |
 | `.claude/skills/` (optional) | Vendored UI/design skill library: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, `brand` — each self-describing via `SKILL.md`, loaded on demand for frontend work |
 | `.claude/settings.json.example` | Sample Claude Code `hooks` wiring; **you merge it** into `.claude/settings.json` to activate |
+| `.claude/config.yml.example` (optional) | Sample config; copy to `.claude/config.yml` to set `exclude_line_cap` globs (size-cap exemptions) and a `test_command` for `/test` |
 | `CLAUDE.md.example` (optional) | Stub pointing at the entrypoint; copy or merge into your `CLAUDE.md` |
 
 The checkpoint protocol and orchestration layer are **stack-agnostic** — they describe *how* work flows through agents and defer stack-specific conventions to `.claude/rules/` and `.claude/CONTEXT_MAP.md`, which you fill in for your project. For a ready-made stack flavor, apply an [overlay](#stack-overlays).
@@ -108,8 +109,8 @@ If you have **git** and **network** access, `bootstrap.sh` shallow-clones this r
 ```bash
 chmod +x bootstrap.sh
 ./bootstrap.sh /path/to/your-project
-# Pin a tag (default: v1.2.0):
-./bootstrap.sh -t v1.2.0 /path/to/your-project
+# Pin a tag (default: v1.3.0):
+./bootstrap.sh -t v1.3.0 /path/to/your-project
 ```
 
 Override the remote with `WORKFLOW_KIT_REPO` (forks or mirrors).
@@ -120,8 +121,8 @@ Override the remote with `WORKFLOW_KIT_REPO` (forks or mirrors).
 
 ```powershell
 .\bootstrap.ps1 C:\path\to\your-project
-# Pin a tag (default: v1.2.0):
-.\bootstrap.ps1 -t v1.2.0 C:\path\to\your-project
+# Pin a tag (default: v1.3.0):
+.\bootstrap.ps1 -t v1.3.0 C:\path\to\your-project
 # Forward install.ps1 flags (e.g. the Django overlay):
 .\bootstrap.ps1 --overlay django C:\path\to\your-project
 ```
@@ -133,7 +134,7 @@ Any options other than `-t`/`--tag` are forwarded to `install.ps1` unchanged. Ov
 **Optional one-liner** (fetches the whole bootstrap script, then it clones the repo):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.2.0/bootstrap.sh -o /tmp/wk-bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.3.0/bootstrap.sh -o /tmp/wk-bootstrap.sh
 chmod +x /tmp/wk-bootstrap.sh
 /tmp/wk-bootstrap.sh /path/to/your-project
 ```
@@ -141,7 +142,7 @@ chmod +x /tmp/wk-bootstrap.sh
 PowerShell one-liner equivalent (downloads `bootstrap.ps1`, then it clones the repo):
 
 ```powershell
-irm https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.2.0/bootstrap.ps1 -OutFile $env:TEMP\wk-bootstrap.ps1
+irm https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.3.0/bootstrap.ps1 -OutFile $env:TEMP\wk-bootstrap.ps1
 powershell -ExecutionPolicy Bypass -File $env:TEMP\wk-bootstrap.ps1 C:\path\to\your-project
 ```
 
@@ -178,15 +179,15 @@ The default remote for this project is `git@github.com:Katestheimeno/workflow-ki
 ```bash
 git init
 git add .
-git commit -m "chore: workflow-kit v1.2.0"
+git commit -m "chore: workflow-kit v1.3.0"
 git remote add origin git@github.com:Katestheimeno/workflow-kit.git
 git branch -M main
 git push -u origin main
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
-Tags enable `bootstrap.sh -t v1.2.0` and stable `raw.githubusercontent` URLs.
+Tags enable `bootstrap.sh -t v1.3.0` and stable `raw.githubusercontent` URLs.
 
 ## Mirroring in another monorepo
 
@@ -206,7 +207,7 @@ test -f /tmp/workflow-kit-test/.claude/WORKFLOW_KIT
 
 ## `raw.githubusercontent.com` references
 
-Replace `v1.2.0` with the tag you published:
+Replace `v1.3.0` with the tag you published:
 
-- Bootstrap: `https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.2.0/bootstrap.sh`
-- `install.sh` (only useful next to a full checkout or inside a release tarball, not by itself): `.../v1.2.0/install.sh`
+- Bootstrap: `https://raw.githubusercontent.com/Katestheimeno/workflow-kit/v1.3.0/bootstrap.sh`
+- `install.sh` (only useful next to a full checkout or inside a release tarball, not by itself): `.../v1.3.0/install.sh`

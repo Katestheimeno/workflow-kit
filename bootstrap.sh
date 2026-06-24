@@ -6,7 +6,7 @@ set -euo pipefail
 REPO_DEFAULT="git@github.com:Katestheimeno/workflow-kit.git"
 REPO="${WORKFLOW_KIT_REPO:-${REPO_DEFAULT}}"
 
-TAG="v1.2.0"
+TAG="v1.3.0"
 TARGET_ARG=""
 
 usage() {
@@ -17,7 +17,7 @@ Usage: bootstrap.sh [OPTIONS] <TARGET_PROJECT_DIR>
   install.sh against TARGET_PROJECT_DIR, then removes the clone.
 
 Options:
-  -t, --tag TAG   Git tag to clone (default: v1.2.0). Must exist on the remote.
+  -t, --tag TAG   Git tag to clone (default: v1.3.0). Must exist on the remote.
   -h, --help      Show this help.
 
 Environment:

@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2026-06-24
 
 ### Added
 
@@ -30,9 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `/test` (`commands/test.md`) — discover the project's test command, run it, and gate `/commit` on the result; "no suite" is a documented skip, not a silent pass.
 - **`hooks/guard-bash-writes.sh`** — new `PostToolUse(Bash)` hook that catches in-place writes (`sed -i`, `awk -i inplace`, `tee`, `truncate`, `>` redirection) which bypass the `Edit`/`Write` hook, and enforces the 250-line size cap on the files they touch. Closes the gap where shell rewrites escaped `progress-heartbeat.sh`. The shared cap/exemption logic now lives in `_lib.sh` (`wk_over_cap`), reused by both hooks. Wired in `settings.json.example`.
 - **UI/design skill library** (`bundle/skills/`, optional, stack-agnostic): vendored `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, and `brand`, each with its own `SKILL.md` (loaded on demand) and `SOURCE.md` provenance. `install.sh`/`install.ps1` now copy `skills/` as a content dir, and their merge step handles nested subdirectories (so a skill's `data/`/`scripts/`/`templates/` install intact and re-installs idempotently).
+- **`plan-reviewer` agent** (`agents/plan-reviewer.md`) — independent critique of a freshly generated `MASTER_TASKS` plan; `/flow pln` runs it ≥2× to amend the plan before presenting. Brings the agent roster to 11.
+- **`config.yml.example`** (`bundle/config.yml.example`) — documents the two optional knobs the kit already reads: `exclude_line_cap:` (globs exempt from the 250-line size cap, consumed by `_lib.sh`/the hooks) and `test_command:` (used first by `/test` before auto-discovery). `install.sh`/`install.ps1` copy it into `.claude/` alongside `settings.json.example`; the entrypoint and README document it. Previously these knobs were read by code but never shipped or documented.
+
+### Changed
+
+- **Active-feature pointer is now a single, pinned contract.** `/flow` (and the django overlay) write the active feature under `## Active` as a **bare folder name** (`→ <feature>`), not a markdown link — which is what every consumer (`_lib.sh`'s `wk_active_feature`, `session-start.sh`, `checkpoint.sh`) already parsed. `CONTEXT_MAP.md` guidance updated to match.
+- `/commit` gained a **Phase 0.5 test gate**: it confirms `/test` passed (or that the absence of a suite was documented) before generating `commit-all.sh`, and refuses otherwise unless explicitly overridden. Previously `/test` claimed to gate `/commit` but nothing enforced it.
 
 ### Fixed
 
+- **`hooks/checkpoint.sh` mistook the default "no active feature" state for a feature named `none`.** It stripped `→` from the canonical `→ none` sentinel and compared only against `(none)`, so on every fresh install and after every feature archival it injected `Active feature: none → read .claude/tasks/none/MASTER_TASKS.md` into *every* prompt. It now sources `_lib.sh` and reuses `wk_active_feature` (the same parser the other hooks use), so the sentinel is handled in one place; also aligns its shebang to `#!/usr/bin/env bash` and gains the `wk_find_root` PWD fallback.
+- **`hooks/_lib.sh` (`wk_over_cap`) dropped every `exclude_line_cap` glob after the first.** The awk print rule mutated `$0` via `sub`/`gsub`, after which the list-terminator rule saw the rewritten bare glob (a non-space first char) and ended the list. The print rule now `next`s. Surfaced when `config.yml.example` shipped a multi-entry exemption list; with a single entry the bug was invisible.
+- **`hooks/archive-feature.sh` used inconsistent matching** to reset `## Active` to `none`: the MASTER_PLAN rewrite required an exact match while the CONTEXT_MAP rewrite used a substring match. Both now match exactly, so completing a feature reliably clears the active pointer in both files.
 - `hooks/checkpoint.sh` now emits `additionalContext` under `hookSpecificOutput` with `hookEventName: "UserPromptSubmit"`, matching the current Claude Code hook contract. Previously the checkpoint reminder used a top-level `additionalContext` field that Claude Code does not read, so the protocol injection was being dropped.
 - All slash commands (`/flow`, `/sweep`, `/commit`, `/retro`, `/weekly-summary`, plus the django-overlay `/flow` and `/sweep`) now declare YAML frontmatter (`description`, and `argument-hint` where they take arguments), so they show proper text and argument hints in the `/` menu.
 
@@ -78,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial kit: `CLAUDE_ENTRYPOINT.md`, `CONTEXT_MAP` template, `tasks/` skeleton, `install.sh`, `CLAUDE.md.example`, `example-feature` README.
 
+[1.3.0]: https://github.com/Katestheimeno/workflow-kit/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Katestheimeno/workflow-kit/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Katestheimeno/workflow-kit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Katestheimeno/workflow-kit/releases/tag/v1.0.0
