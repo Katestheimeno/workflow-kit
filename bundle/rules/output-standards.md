@@ -17,6 +17,11 @@ size — Micro/Small tasks use the short form; Medium+ tasks use the full anatom
 
 Micro/Small tasks skip the empty sections — match length to complexity, don't pad.
 
+> **Caveman mode override.** When the optional caveman compression mode is active
+> (see `caveman.md`), it supersedes this verbose anatomy for *prose*: drop the
+> decorative blocks, write fragments, keep the Next actions block but render it terse.
+> Code, error strings, and safety-critical confirmations are never compressed.
+
 ## Code block rules
 
 - Label every block with its **file path** and whether it's new or modified:

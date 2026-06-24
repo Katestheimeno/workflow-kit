@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-06-24
+
+### Added
+
+- **Caveman token-compression mode** (vendored from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman), MIT) — makes Claude answer in terse "caveman speak", cutting ~65–75% of output tokens while keeping full technical accuracy.
+  - **Skills** (`bundle/skills/`): `caveman` (the `/caveman lite|full|ultra|wenyan` toggle), `caveman-commit`, `caveman-review`, `caveman-stats`, `caveman-compress` (Python scripts vendored), `caveman-help`, and `cavecrew`. Each carries a `SOURCE.md` provenance file. `caveman-commit`/`caveman-review` overlap the kit's own `/commit` and `/code-review` flows — both noted as independent.
+  - **Agents** (`bundle/agents/`): `cavecrew-investigator`, `cavecrew-builder`, `cavecrew-reviewer` — caveman-compressed subagents (~60% fewer tokens than vanilla).
+  - **Hooks** (`bundle/hooks/`, **Node ≥18**): `caveman-config.js` (config resolver + symlink-safe flag I/O), `caveman-activate.js` (`SessionStart` — writes the mode flag and injects `skills/caveman/SKILL.md` as context), `caveman-mode-tracker.js` (`UserPromptSubmit` — toggle tracking + per-turn reinforcement + `/caveman-stats`), `caveman-stats.js`, and `caveman-statusline.sh`/`.ps1` (the `[CAVEMAN]` badge). The kit's `.claude/hooks/` + `.claude/skills/` sibling layout matches caveman's `__dirname/../skills/caveman/SKILL.md` lookup, so the skill stays the single source of truth.
+  - **Wiring** (`settings.json.example`): caveman's `SessionStart`, `UserPromptSubmit`, and a top-level `statusLine` entry added alongside the existing kit hooks. **Opt-in but auto-on** once merged; leave the entries out to keep it manual (the `/caveman` skills still load on demand).
+  - **Reconciliation** (`rules/caveman.md`): defines caveman's precedence over `output-standards.md` — caveman compresses *prose* only; code, commits, exact error strings, and safety-critical confirmations are never compressed; the Next actions block stays (terse). A pointer note added to `output-standards.md`.
+  - `install.sh` / `install.ps1` hooks-prompt and README "What gets installed" / skills / rules sections updated; agent count 11 → 14.
+  - **Not vendored**: `caveman-shrink` (MCP middleware), the standalone installers, benchmarks/evals/tests, and the non–Claude-Code agent install paths.
+
 ## [1.3.0] - 2026-06-24
 
 ### Added

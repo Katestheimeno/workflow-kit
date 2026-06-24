@@ -251,6 +251,14 @@ workflow-kit: hooks are installed but NOT yet wired up.
     - PostToolUse      → hooks/progress-heartbeat.sh (feature-completion + scope-drift + size-cap warnings)
     - PostToolUse      → hooks/guard-bash-writes.sh  (size-cap on in-place bash writes: sed -i, tee, truncate, >)
     - Stop             → hooks/validate-state.sh     (checks state invariants)
+    - SessionStart     → hooks/caveman-activate.js     (caveman compression mode, auto-on; needs Node >=18)
+    - UserPromptSubmit → hooks/caveman-mode-tracker.js (tracks /caveman toggles + per-turn reinforcement)
+    - statusLine       → hooks/caveman-statusline.sh   ([CAVEMAN] badge while active)
+
+  Caveman mode is opt-in but auto-on once wired. To skip it, leave the three caveman
+  entries (+ the "statusLine" block) out of your settings.json; the /caveman skills
+  still load on demand. Levels: /caveman lite|full|ultra|wenyan; off: "normal mode".
+  See rules/caveman.md.
 
   Manual tool (invoke when a feature is done):
     ${claude_dir}/hooks/archive-feature.sh <feature>

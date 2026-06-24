@@ -1,0 +1,3 @@
+# Python build artifacts (e.g. from vendored caveman-compress scripts)
+__pycache__/
+*.py[cod]

@@ -17,13 +17,13 @@ Version: [VERSION](VERSION). Changelog: [CHANGELOG.md](CHANGELOG.md). License: [
 | `.claude/tasks/general/SESSION_LOG.md` | Append-only log for small tasks |
 | `.claude/tasks/completed/`, `archive/` | Placeholders for summaries |
 | `.claude/example-feature/` | README, example `MASTER_TASKS.md` and `001-example-subtask.md` |
-| `.claude/hooks/` | Shell scripts: `checkpoint.sh`, `session-start.sh`, `progress-heartbeat.sh`, `guard-bash-writes.sh`, `validate-state.sh`, `archive-feature.sh`, `ensure-tasks.sh`, shared `_lib.sh` |
-| `.claude/agents/` | 11 stack-agnostic role agents (orchestrator, planner, plan-reviewer, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
+| `.claude/hooks/` | Shell scripts: `checkpoint.sh`, `session-start.sh`, `progress-heartbeat.sh`, `guard-bash-writes.sh`, `validate-state.sh`, `archive-feature.sh`, `ensure-tasks.sh`, shared `_lib.sh`; plus the caveman Node hooks (`caveman-config.js`, `caveman-activate.js`, `caveman-mode-tracker.js`, `caveman-stats.js`) and statusline (`caveman-statusline.sh`/`.ps1`) — **Node ≥18** |
+| `.claude/agents/` | 14 stack-agnostic role agents (orchestrator, planner, plan-reviewer, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer, plus the caveman-compressed `cavecrew-investigator`, `cavecrew-builder`, `cavecrew-reviewer`) |
 | `.claude/commands/` | `/flow` (router: `pln` plan + review, `impl` orchestrated execution, `cmplt` archive), `/sweep` (deep domain/context analysis → remediation plan), `/mem` (persistent cross-session memory), `/recover` (reconstruct in-flight work), `/pause` (checkpoint a subtask), `/pr-notes` (PR description / CHANGELOG), `/debug` (structured bug investigation), `/test` (run suite + gate `/commit`), `/commit`, `/retro`, `/weekly-summary` |
 | `.claude/memory/` | `MEMORY.md` index + `<type>_<slug>.md` files — persistent project memory managed by `/mem`, bootstrapped by `ensure-tasks.sh` |
-| `.claude/rules/` | `workflow.md` (orchestration protocol + task sizing + clarification gate), `quality.md` (Definition of Done), `testing.md` (testing discipline), `audit-loop.md` (tiered self-audit before review), `file-architecture.md` (250/60 size caps + split), `context7.md` (fetch current library docs via Context7 MCP), `assumptions.md` (assumption transparency + conflict detection), `output-standards.md` (response anatomy + Next Actions) |
+| `.claude/rules/` | `workflow.md` (orchestration protocol + task sizing + clarification gate), `quality.md` (Definition of Done), `testing.md` (testing discipline), `audit-loop.md` (tiered self-audit before review), `file-architecture.md` (250/60 size caps + split), `context7.md` (fetch current library docs via Context7 MCP), `assumptions.md` (assumption transparency + conflict detection), `output-standards.md` (response anatomy + Next Actions), `caveman.md` (caveman compression mode + precedence over output standards) |
 | `.claude/prompts/` | `sweep.md` (engine behind `/sweep`), `generate-commit-script.md`, `work-journal.md` |
-| `.claude/skills/` (optional) | Vendored UI/design skill library: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, `brand` — each self-describing via `SKILL.md`, loaded on demand for frontend work |
+| `.claude/skills/` (optional) | Vendored UI/design skill library: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, `brand`; plus the **caveman** token-compression family: `caveman`, `caveman-commit`, `caveman-review`, `caveman-stats`, `caveman-compress`, `caveman-help`, `cavecrew` — each self-describing via `SKILL.md`, loaded on demand. `SOURCE.md` records provenance |
 | `.claude/settings.json.example` | Sample Claude Code `hooks` wiring; **you merge it** into `.claude/settings.json` to activate |
 | `.claude/config.yml.example` (optional) | Sample config; copy to `.claude/config.yml` to set `exclude_line_cap` globs (size-cap exemptions) and a `test_command` for `/test` |
 | `CLAUDE.md.example` (optional) | Stub pointing at the entrypoint; copy or merge into your `CLAUDE.md` |
@@ -62,6 +62,15 @@ To make the agents match your stack, fill in `.claude/rules/` with your layering
 ### UI/design skills (optional)
 
 The bundle also vendors a stack-agnostic UI/design **skill library** under `.claude/skills/` — `ui-ux-pro-max` (a searchable database of styles, palettes, font pairings, and charts), the anti-slop `impeccable` and `design-taste-frontend`, plus `frontend-design`, `design-system`, `design`, `ui-styling`, `slides`, `banner-design`, and `brand`. Each is self-describing via its `SKILL.md`, so Claude loads them on demand for frontend/design work; per-skill `SOURCE.md` files record provenance. They install with the rest of the content dirs and carry no dependency on the orchestration layer.
+
+### Caveman compression mode (optional)
+
+The bundle also vendors [**caveman**](https://github.com/JuliusBrussee/caveman) (MIT) — a token-compression mode that makes Claude answer in terse "caveman speak", cutting **~65–75% of output tokens** while keeping full technical accuracy. It ships as a skill family (`caveman`, `caveman-commit`, `caveman-review`, `caveman-stats`, `caveman-compress`, `caveman-help`, `cavecrew`), three caveman-compressed subagents (`cavecrew-*`), and Node hooks that activate it from message one.
+
+- **Activation** — the `SessionStart`/`UserPromptSubmit` hooks (`caveman-*.js`, **Node ≥18**) plus a `statusLine` badge are wired in `settings.json.example`. Caveman is **opt-in but auto-on** once merged: leave its three hook entries (and the `statusLine` block) out of your `.claude/settings.json` to keep it manual — the `/caveman` skills still load on demand.
+- **Control** — `/caveman lite|full|ultra|wenyan` switches intensity; `/caveman off`, "stop caveman", or "normal mode" disables it. Pin a per-project default with a checked-in `.caveman/config.json`. The mode flag lives in your user config dir, so it applies across projects.
+- **Precedence** — caveman deliberately overrides the verbose `output-standards.md` anatomy for *prose* only. Code, commits, exact error strings, and safety-critical confirmations are never compressed. The reconciliation rule is `rules/caveman.md`.
+- **Not vendored** — `caveman-shrink` (MCP middleware compressing tool descriptions) is published separately on npm; install it directly if you want it. Per-skill `SOURCE.md` files record what was imported.
 
 ## Stack overlays
 
