@@ -12,7 +12,7 @@ Last Updated: (set on first use)
 <!-- One paragraph: name, purpose, main stack. -->
 
 ## Active Feature
-→ none (or `→` link to feature name under `.claude/tasks/{feature}/`)
+→ none (or `→ <feature>` — the bare folder name under `.claude/tasks/{feature}/`, no link)
 
 ## Architecture Snapshot
 <!-- List top-level areas: e.g. `api/`, `services/`, `config/`, or app names. -->

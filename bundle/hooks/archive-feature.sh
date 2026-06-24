@@ -180,7 +180,10 @@ map_rewrite() {
       next
     }
     section == "## Active Feature" && /^→/ {
-      if (index($0, feat) > 0) { print "→ none"; next }
+      rest = $0
+      sub(/^→[[:space:]]*/, "", rest)
+      sub(/[[:space:]]*$/, "", rest)
+      if (rest == feat) { print "→ none"; next }
     }
     { print }
     END {

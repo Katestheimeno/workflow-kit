@@ -1,18 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Checkpoint protocol reminder — injected before every user prompt.
-# Reads MASTER_PLAN.md to surface the active feature name dynamically.
+# Surfaces the active feature via wk_active_feature (shared with the other hooks)
+# so the reminder is accurate and the "no active feature" sentinel is handled in
+# exactly one place. (Previously this hook reimplemented the parser inline and
+# mistook the default "→ none" state for a feature literally named "none".)
+set -euo pipefail
 
-TASKS_DIR="$CLAUDE_PROJECT_DIR/.claude/tasks"
-MASTER_PLAN="$TASKS_DIR/MASTER_PLAN.md"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_lib.sh
+source "${SCRIPT_DIR}/_lib.sh"
 
-# Extract active feature (line after "## Active")
-ACTIVE_FEATURE=""
-if [ -f "$MASTER_PLAN" ]; then
-  ACTIVE_FEATURE=$(awk '/^## Active/{found=1; next} found && /\S/{print; exit}' "$MASTER_PLAN" | sed 's/^[→\*[:space:]]*//')
-fi
+ROOT="$(wk_find_root)" || exit 0
 
-if [ -n "$ACTIVE_FEATURE" ] && [ "$ACTIVE_FEATURE" != "(none)" ]; then
-  FEATURE_LINE="Active feature: $ACTIVE_FEATURE → read .claude/tasks/$ACTIVE_FEATURE/MASTER_TASKS.md, find [IN_PROGRESS] subtask (or mark first [PENDING] as [IN_PROGRESS])."
+# wk_active_feature returns the bare feature folder name, or fails when Active is
+# unset (→ none). flow.md writes the bare name, so this maps straight to a folder.
+feat="$(wk_active_feature "$ROOT" 2>/dev/null || true)"
+if [[ -n "$feat" ]]; then
+  FEATURE_LINE="Active feature: ${feat} → read .claude/tasks/${feat}/MASTER_TASKS.md, find [IN_PROGRESS] subtask (or mark first [PENDING] as [IN_PROGRESS])."
 else
   FEATURE_LINE="No active feature. If user requests a new feature, create a plan in .claude/tasks/{feature}/."
 fi
@@ -22,7 +26,7 @@ cat <<EOF
   "continue": true,
   "hookSpecificOutput": {
     "hookEventName": "UserPromptSubmit",
-    "additionalContext": "CHECKPOINT PROTOCOL (mandatory before acting):\n1. Read .claude/CONTEXT_MAP.md — full project state.\n2. Read .claude/tasks/MASTER_PLAN.md — active feature and queue.\n3. $FEATURE_LINE\n4. Update subtask Status: [IN_PROGRESS] when starting, [COMPLETED] when done (validation must pass first).\n5. When a feature completes: update MASTER_TASKS.md status, create .claude/tasks/completed/{feature}.md summary, move feature folder to .claude/tasks/archive/, update MASTER_PLAN.md (Active → none, add to Completed), update .claude/CONTEXT_MAP.md."
+    "additionalContext": "CHECKPOINT PROTOCOL (mandatory before acting):\n1. Read .claude/CONTEXT_MAP.md — full project state.\n2. Read .claude/tasks/MASTER_PLAN.md — active feature and queue.\n3. ${FEATURE_LINE}\n4. Update subtask Status: [IN_PROGRESS] when starting, [COMPLETED] when done (validation must pass first).\n5. When a feature completes: update MASTER_TASKS.md status, create .claude/tasks/completed/{feature}.md summary, move feature folder to .claude/tasks/archive/, update MASTER_PLAN.md (Active → none, add to Completed), update .claude/CONTEXT_MAP.md."
   }
 }
 EOF

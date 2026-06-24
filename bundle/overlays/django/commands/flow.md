@@ -146,7 +146,9 @@ even if the plan looks complete.
 ### Phase 3 — Register the plan
 
 1. **Update `.claude/tasks/MASTER_PLAN.md`:**
-   - Add the new feature under `## Active` with a link to its `MASTER_TASKS.md`.
+   - Add the new feature under `## Active` as a **bare folder name** (`→ <feature>`),
+     matching its directory under `.claude/tasks/`. The hooks parse this name to locate
+     `MASTER_TASKS.md` — do **not** use a markdown link or a path.
    - Include a brief description and "0/N subtasks done".
 
 2. **Report to the user:**
