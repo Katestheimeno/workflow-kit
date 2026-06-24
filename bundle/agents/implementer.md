@@ -60,6 +60,19 @@ If it fails:
 3. Re-run until green.
 4. If you can't fix it after 2 attempts, report the failure with the full output.
 
+## Audit loop (self-pass — run before reporting)
+
+After validation passes, run the **tiered post-implementation audit** in
+`.claude/rules/audit-loop.md` against your own diff. Compute the tier from
+`git diff --shortstat HEAD`, walk the iterations in order (Architecture → Size/Perf →
+Types/Validation → Dependencies, scaled to the tier), fix every finding inline, and emit
+the audit summary block. Assume your first draft has at least one violation.
+
+Do **not** report the subtask done until the audit reports `✅ READY`. If it reports
+`⚠️ NEEDS REVIEW`, fix the outstanding issues and re-run — never hand off a draft that
+hasn't reached READY. (This is the first gate; the orchestrator dispatches the independent
+`code-reviewer` as the second gate afterward — the two are not redundant.)
+
 ## Reporting
 
 When you're done, report:
@@ -67,8 +80,9 @@ When you're done, report:
 2. **Files modified** (full paths, with a summary of changes)
 3. **Tests added** (full test names)
 4. **Validation passing?** (yes/no — include output if no)
-5. **Generated artifacts updated?** (migrations/schema/codegen — yes/no, names)
-6. **Concerns** — anything you noticed that might need attention but was outside your scope
+5. **Audit loop** — tier run + `✅ READY` (paste the audit summary block)
+6. **Generated artifacts updated?** (migrations/schema/codegen — yes/no, names)
+7. **Concerns** — anything you noticed that might need attention but was outside your scope
 
 ## What you do NOT do
 

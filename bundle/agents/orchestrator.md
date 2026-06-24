@@ -40,19 +40,22 @@ from the first group that still has incomplete subtasks.
 4. WRITE precise implementer prompts (see below)
 5. DISPATCH implementers in parallel (one per subtask with disjoint file ownership)
 6. WAIT for all implementers to return
-7. RUN the validation command for the affected area
-8. DISPATCH code-reviewer agents (one per subtask, parallel)
-9. IF reviewer says ISSUES FOUND:
-   a. Analyze the issues — are they real?
-   b. Write correction instructions for the implementer
-   c. DISPATCH implementer again with corrections
-   d. RE-RUN validation
-   e. Cap at 2 correction rounds per subtask
-10. UPDATE the subtask's status to [COMPLETED] in the `## Subtasks` bullet list of
+7. CONFIRM each implementer reported its audit-loop self-pass as ✅ READY
+   (.claude/rules/audit-loop.md). If one is ⚠️ NEEDS REVIEW or missing, send it back
+   for fixes before proceeding — do not review or accept an unaudited draft.
+8. RUN the validation command for the affected area
+9. DISPATCH code-reviewer agents (one per subtask, parallel)
+10. IF reviewer says ISSUES FOUND:
+    a. Analyze the issues — are they real?
+    b. Write correction instructions for the implementer
+    c. DISPATCH implementer again with corrections
+    d. RE-RUN validation
+    e. Cap at 2 correction rounds per subtask
+11. UPDATE the subtask's status to [COMPLETED] in the `## Subtasks` bullet list of
     MASTER_TASKS.md — validation must pass first. This bullet list is the canonical
     status source the `/flow cmplt` archive hook reads, so keep it accurate (use
     [SKIPPED] for intentionally dropped subtasks, [BLOCKED] for stuck ones).
-11. MOVE to next parallel group
+12. MOVE to next parallel group
 ```
 
 ## Execution rules / checkpoints
@@ -108,6 +111,7 @@ Every prompt to an implementer must include ALL of the following:
 
 ## Validation checklist (after each implementer returns)
 
+- [ ] Implementer's audit-loop self-pass reached `✅ READY` (`rules/audit-loop.md`)
 - [ ] Logic is in the correct layer/module per project rules
 - [ ] Reads and writes are separated as the project's conventions require
 - [ ] Transactions/atomicity wrap multi-step writes where the stack supports it

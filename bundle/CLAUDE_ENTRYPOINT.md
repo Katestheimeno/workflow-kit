@@ -124,9 +124,12 @@ orchestration layer built on top of the checkpoint protocol:
   start (surfaced by `session-start.sh`) and `save`s at `/flow cmplt`, storing project
   facts, preferences, and constraints under `.claude/memory/` so they survive across chats.
 - **`.claude/rules/`** — conventions the agents read as source of truth. `workflow.md` is
-  the agent orchestration protocol; add your own `foundations.md`/layering rules so agents
-  match your stack. (A Django overlay ships these pre-filled — see the kit's
-  `bundle/overlays/`.)
+  the agent orchestration protocol; `quality.md` the Definition of Done; `testing.md` the
+  testing discipline; `audit-loop.md` the tiered self-audit implementers run before review;
+  `file-architecture.md` the 250/60 size caps + split procedure; `context7.md` the rule to
+  fetch current library docs via the Context7 MCP. Add your own `foundations.md`/layering
+  rules so agents match your stack. (A Django overlay ships these pre-filled — see the
+  kit's `bundle/overlays/`.)
 - **`.claude/prompts/`** — `sweep.md` (the engine behind `/sweep`),
   `generate-commit-script.md`, `work-journal.md`.
 

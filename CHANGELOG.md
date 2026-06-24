@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `apply` runs automatically at session start — `session-start.sh` surfaces the memory index and directs Claude to load it.
   - `save` runs automatically at `/flow cmplt` — completion now scans the session for memory-worthy items.
   - `ensure-tasks.sh` bootstraps `.claude/memory/MEMORY.md` idempotently alongside the task scaffolding.
+- **Discipline layer** (stack-agnostic rules, ported and adapted from claude-workflow-kit):
+  - `rules/audit-loop.md` — tiered post-implementation self-audit (Architecture → Size/Perf → Types/Validation → Dependencies), scaled by diff size (Micro/Small/Medium+). The implementer runs it as the first gate before reporting; the `code-reviewer` agent remains the independent second gate. Wired into `agents/implementer.md` (self-pass + report the summary) and `agents/orchestrator.md` (confirm `✅ READY` before review).
+  - `rules/file-architecture.md` — 250-line file / 60-line function caps + a stack-agnostic split procedure. `hooks/progress-heartbeat.sh` now warns (blocks in strict mode) when an edited source file exceeds 250 lines, honoring `exclude_line_cap` globs from `.claude/config.yml` and skipping generated files.
+  - `rules/context7.md` — fetch current library/framework docs via the Context7 MCP before answering API/SDK/CLI questions.
 
 ### Fixed
 

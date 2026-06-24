@@ -84,6 +84,20 @@ If tests fail:
 3. Re-run until green
 4. If you can't fix it after 2 attempts, report the failure with the full traceback
 
+## Audit loop (self-pass — run before reporting)
+
+After tests pass, run the **tiered post-implementation audit** in
+`.claude/rules/audit-loop.md` against your own diff. Compute the tier from
+`git diff --shortstat HEAD`, walk the iterations in order (Architecture → Size/Perf →
+Types/Validation → Dependencies, scaled to the tier), fix every finding inline, and emit
+the audit summary block. For Django, fold the layering check (view → service → selector →
+model, imports inward only) into Iteration 1 and the file/function caps into Iteration 2.
+
+Do **not** report the subtask done until the audit reports `✅ READY`. If it reports
+`⚠️ NEEDS REVIEW`, fix and re-run — never hand off a draft that hasn't reached READY.
+(This is the first gate; the orchestrator dispatches the independent `code-reviewer` as the
+second gate afterward.)
+
 ## Reporting
 
 When you're done, report:
@@ -91,8 +105,9 @@ When you're done, report:
 2. **Files modified** (full paths, with summary of changes)
 3. **Tests added** (full test names)
 4. **Tests passing?** (yes/no — include traceback if no)
-5. **Migrations created?** (yes/no — include migration filename)
-6. **Concerns** — anything you noticed that might need attention but was outside your scope
+5. **Audit loop** — tier run + `✅ READY` (paste the audit summary block)
+6. **Migrations created?** (yes/no — include migration filename)
+7. **Concerns** — anything you noticed that might need attention but was outside your scope
 
 ## What you do NOT do
 

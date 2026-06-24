@@ -21,7 +21,7 @@ Version: [VERSION](VERSION). Changelog: [CHANGELOG.md](CHANGELOG.md). License: [
 | `.claude/agents/` | 10 stack-agnostic role agents (orchestrator, planner, implementer, explorer, code-reviewer, test-writer, doc-writer, security-auditor, sweep-analyzer, sweep-reviewer) |
 | `.claude/commands/` | `/flow` (router: `pln` plan + review, `impl` orchestrated execution, `cmplt` archive), `/sweep` (deep domain/context analysis → remediation plan), `/mem` (persistent cross-session memory), `/commit`, `/retro`, `/weekly-summary` |
 | `.claude/memory/` | `MEMORY.md` index + `<type>_<slug>.md` files — persistent project memory managed by `/mem`, bootstrapped by `ensure-tasks.sh` |
-| `.claude/rules/` | `workflow.md` (agent orchestration protocol), `quality.md` (Definition of Done), `testing.md` (testing discipline) |
+| `.claude/rules/` | `workflow.md` (agent orchestration protocol), `quality.md` (Definition of Done), `testing.md` (testing discipline), `audit-loop.md` (tiered self-audit before review), `file-architecture.md` (250/60 size caps + split), `context7.md` (fetch current library docs via Context7 MCP) |
 | `.claude/prompts/` | `sweep.md` (engine behind `/sweep`), `generate-commit-script.md`, `work-journal.md` |
 | `.claude/settings.json.example` | Sample Claude Code `hooks` wiring; **you merge it** into `.claude/settings.json` to activate |
 | `CLAUDE.md.example` (optional) | Stub pointing at the entrypoint; copy or merge into your `CLAUDE.md` |
